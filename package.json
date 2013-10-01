@@ -3,12 +3,32 @@
     "main":"ui.html",
     "description":"Xiami HQ Music Downloader",
     "version":"0.5.3",
-    "keywords":["XiamiThief","Music","Downloader"],
-    "maintainers":[{
+    "keywords":[
+        "XiamiThief",
+        "Music",
+        "Downloader"
+    ],
+    "author":{
         "name":"Black Glory",
         "email":"woshenmedoubuzhidao@blackglory.me",
-        "web":"http://www.blackglory.me"
-    }],
+        "url":"http://www.blackglory.me"
+    },
+    "repository": {
+        "type": "git",
+        "url": "http://github.com/BlackGlory/XiamiThief.git"
+    },
+    "bugs": {
+        "url": "http://github.com/BlackGlory/XiamiThief/issues"
+    },
+    "engines": [
+        "node >= 0.10.18"
+    ],
+    "dependencies": {
+        "cheerio": "~0.12.1",
+        "mkdirp": "~0.3.5",
+        "request": "~2.27.0",
+        "xml2js": "~0.2.8",
+    },
     "window":{
         "show":true,
         "icon":"logo64.png",
