@@ -1,0 +1,27 @@
+{
+    "name":"xiami-thief",
+    "main":"ui.html",
+    "description":"Xiami HQ Music Downloader",
+    "version":"0.5.3",
+    "keywords":["XiamiThief","Music","Downloader"],
+    "maintainers":[{
+        "name":"Black Glory",
+        "email":"woshenmedoubuzhidao@blackglory.me",
+        "web":"http://www.blackglory.me"
+    }],
+    "window":{
+        "show":true,
+        "icon":"logo64.png",
+        "toolbar":false,
+        "width":800,
+        "height":600,
+        "position":"mouse",
+        "resizable":false,
+        "frame":false,
+        "transparent":true
+    },
+    "webkit":{
+        "page-cache":false,
+        "plugin":false
+    }
+}
