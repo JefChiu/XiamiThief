@@ -27,7 +27,7 @@
         "cheerio": "~0.12.1",
         "mkdirp": "~0.3.5",
         "request": "~2.27.0",
-        "xml2js": "~0.2.8",
+        "xml2js": "~0.2.8"
     },
     "window":{
         "show":true,
