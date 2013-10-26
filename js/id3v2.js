@@ -178,7 +178,7 @@
             header.write(hex([0x00]).times(blankLength), 6, blankLength, 'utf8');
           }
           header.write(headerSize, 6 + blankLength, 10, 'ascii');
-          return fs.write(fd, header, 0, header.length, 0, function(err, written, buffer) {
+          return fs.write(fd, header, 0, header.length, null, function(err, written, buffer) {
             var writeFrame;
             writeFrame = function(i) {
               frame = frames[i];

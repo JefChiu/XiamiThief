@@ -113,7 +113,7 @@ class id3v23
                 header.write headerSize,6 + blankLength,10,'ascii'
 
                 # 写入标签头
-                fs.write fd,header,0,header.length,0,(err, written, buffer)->
+                fs.write fd,header,0,header.length,null,(err, written, buffer)->
                     writeFrame = (i)->
                         frame = frames[i]
                         # 写入帧
