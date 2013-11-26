@@ -56,7 +56,7 @@
   request = request.defaults({
     jar: true,
     headers: Headers,
-    followAllRedirects: false,
+    followAllRedirects: true,
     strictSSL: false,
     proxy: false
   });
@@ -310,6 +310,10 @@
           var req;
           return req = http.get(location, function(res) {
             var contentLength, save, size, writer;
+            if (res.statusCode === 302) {
+              download(res.headers.location);
+              return;
+            }
             writer = addId3v23(info);
             save = function() {
               var check, count, f, lastBytes;

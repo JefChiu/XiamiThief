@@ -2,7 +2,7 @@
     "name":"xiami-thief",
     "main":"ui.html",
     "description":"Xiami HQ Music Downloader",
-    "version":"0.5.3",
+    "version":"0.5.4",
     "keywords":[
         "XiamiThief",
         "Music",
@@ -21,7 +21,7 @@
         "url": "http://github.com/BlackGlory/XiamiThief/issues"
     },
     "engines": [
-        "node >= 0.10.18"
+        "node >= 0.10.22"
     ],
     "dependencies": {
         "cheerio": "~0.12.1",

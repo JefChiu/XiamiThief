@@ -54,6 +54,9 @@
       return core.log("启动 " + pkg.name + " " + pkg.version, function() {
         var tray;
         win.show();
+        win.restore();
+        win.setAlwaysOnTop(true);
+        win.setAlwaysOnTop(false);
         _this.remove();
         return tray = null;
       });

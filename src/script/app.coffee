@@ -34,6 +34,9 @@ win.on 'minimize',->
     tray.on 'click', ->
         core.log "启动 #{pkg.name} #{pkg.version}",=>
             win.show()
+            win.restore()
+            win.setAlwaysOnTop true
+            win.setAlwaysOnTop false
             @remove()
             tray = null
     @hide()

@@ -33,7 +33,7 @@ log = (data,cb)->
     fs.appendFile 'XiamiThief.log', "[#{Date()}]#{data}", ->
         cb() if typeof(cb) is 'function'
 
-request = request.defaults {jar: true, headers: Headers, followAllRedirects: false, strictSSL: false, proxy:false}
+request = request.defaults {jar: true, headers: Headers, followAllRedirects: true, strictSSL: false, proxy:false}
 
 mixins = (args...) ->
     result = {}
@@ -234,6 +234,9 @@ downloadMusic = (info, cb, useId3, useLyric, client) ->
         if location
             fs.exists(filename.music, (exists) ->
                 req = http.get(location, (res) ->
+                    if res.statusCode is 302
+                        download res.headers.location
+                        return
                     writer = addId3v23(info)
                     save = ->
                         f = fs.createWriteStream filename.music
