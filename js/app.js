@@ -476,7 +476,7 @@
         formData = data;
         if (data.validate != null) {
           return $scope.$apply(function() {
-            return $scope.validateUrl = 'validate.png';
+            return $scope.validateUrl = "validate.png?" + (Math.random());
           });
         }
       });

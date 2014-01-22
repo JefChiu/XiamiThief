@@ -349,7 +349,7 @@ XiamiThief.controller('OptionAccountCtrl', ($scope, DataService)->
             formData = data
             if data.validate?
                 $scope.$apply ->
-                    $scope.validateUrl = 'validate.png'
+                    $scope.validateUrl = "validate.png?#{Math.random()}"
     getForm() unless $scope.logged
     $scope.rememberAccount = str2bool(localStorage['xt.rememberAccount'])
     $scope.email = if $scope.rememberAccount then localStorage['xt.email']

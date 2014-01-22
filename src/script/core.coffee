@@ -18,7 +18,7 @@ Headers =
     'Connection': 'keep-alive'
     'Host': 'www.xiami.com'
     'Origin': 'http://www.xiami.com'
-    'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36 AlexaToolbar/alxg-3.1'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.22 Safari/537.36'
 
 safeFilter = (str) ->
     removeSpan = (str)->
@@ -33,7 +33,7 @@ log = (data,cb)->
     fs.appendFile 'XiamiThief.log', "[#{Date()}]#{data}", ->
         cb() if typeof(cb) is 'function'
 
-request = request.defaults {jar: true, headers: Headers, followAllRedirects: true, strictSSL: false, proxy:false}
+request = request.defaults {jar: true, headers: Headers, followAllRedirects: not true, strictSSL: false, proxy:false}
 
 mixins = (args...) ->
     result = {}
@@ -374,7 +374,7 @@ downloadAlbumCover = (info, cb, useCover, useId3)->
 
 # 获取登录页面信息
 getLoginForm = (cb) ->
-    request('http://www.xiami.com/member/login', (error, response, body) ->
+    request('https://login.xiami.com/member/login' ? 'http://www.xiami.com/member/login', (error, response, body) ->
         if not error and response.statusCode is 200
             $ = cheerio.load(body, ignoreWhitespace:true)
             fields= $('form input').toArray()
@@ -394,12 +394,12 @@ getLoginForm = (cb) ->
 
 # 取得Cookie
 getCookie = (data, cb) ->
-    request.post('http://www.xiami.com/member/login',
+    request.post('http://www.xiami.com/member/login' ? 'https://login.xiami.com/member/login',
         form: data
         headers: mixins(Headers,
-            'Referer': 'http://www.xiami.com/member/login'
-            'Host': 'www.xiami.com'
-            'Origin': 'http://www.xiami.com'
+            'Referer': 'http://www.xiami.com/member/login' ? 'https://login.xiami.com/member/login'
+            'Host': 'www.xiami.com' ? 'login.xiami.com'
+            'Origin': 'http://www.xiami.com' ? 'https://login.xiami.com'
         ),
         (error, response, body) ->
             fs.unlinkSync 'validate.png' if fs.existsSync 'validate.png'

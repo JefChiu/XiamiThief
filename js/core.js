@@ -29,7 +29,7 @@
     'Connection': 'keep-alive',
     'Host': 'www.xiami.com',
     'Origin': 'http://www.xiami.com',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36 AlexaToolbar/alxg-3.1'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.22 Safari/537.36'
   };
 
   safeFilter = function(str) {
@@ -56,7 +56,7 @@
   request = request.defaults({
     jar: true,
     headers: Headers,
-    followAllRedirects: true,
+    followAllRedirects: !true,
     strictSSL: false,
     proxy: false
   });
@@ -494,7 +494,7 @@
   };
 
   getLoginForm = function(cb) {
-    return request('http://www.xiami.com/member/login', function(error, response, body) {
+    return request('https://login.xiami.com/member/login' != null ? 'https://login.xiami.com/member/login' : 'http://www.xiami.com/member/login', function(error, response, body) {
       var $, data, field, fields, img, name, value, _i, _len, _ref, _ref1;
       if (!error && response.statusCode === 200) {
         $ = cheerio.load(body, {
@@ -522,12 +522,12 @@
   };
 
   getCookie = function(data, cb) {
-    return request.post('http://www.xiami.com/member/login', {
+    return request.post('http://www.xiami.com/member/login' != null ? 'http://www.xiami.com/member/login' : 'https://login.xiami.com/member/login', {
       form: data,
       headers: mixins(Headers, {
-        'Referer': 'http://www.xiami.com/member/login',
-        'Host': 'www.xiami.com',
-        'Origin': 'http://www.xiami.com'
+        'Referer': 'http://www.xiami.com/member/login' != null ? 'http://www.xiami.com/member/login' : 'https://login.xiami.com/member/login',
+        'Host': 'www.xiami.com' != null ? 'www.xiami.com' : 'login.xiami.com',
+        'Origin': 'http://www.xiami.com' != null ? 'http://www.xiami.com' : 'https://login.xiami.com'
       })
     }, function(error, response, body) {
       var cookie, _ref;
