@@ -9,8 +9,8 @@ UI: [node-webkit](https://github.com/rogerwang/node-webkit).
 
 ## Latest version
 
-version: v0.5.5
+version: v0.6.0 Pre-Alpha
 
-node-webkit version: v0.8.4
+node-webkit version: v0.8.6
 
-[Download Page](http://www.blackglory.me/xiamithief-v0-5-beta-release/)
+[Download Page](http://www.blackglory.me/xiamithief-v0-6-pre-alpha/)

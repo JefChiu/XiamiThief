@@ -1,0 +1,432 @@
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+* {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  -webkit-transition: all 0.1s linear;
+  outline: none;
+}
+a {
+  color: #3498db;
+  text-decoration: none;
+}
+a:hover {
+  cursor: pointer;
+  text-decoration: underline;
+}
+textarea {
+  resize: none;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid white;
+  color: white;
+}
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+.drag {
+  -webkit-app-region: drag;
+}
+.align.left {
+  text-align: left;
+}
+.align.right {
+  text-align: right;
+}
+.align.justify {
+  text-align: justify;
+}
+.align.start {
+  text-align: start;
+}
+.align.end {
+  text-align: end;
+}
+.flex-column {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-flow: column;
+  flex-flow: column;
+}
+.flex-column > * {
+  -webkit-flex: 1;
+  flex: 1;
+}
+.flex-row {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-flow: row;
+  flex-flow: row;
+}
+.flex-row > * {
+  -webkit-flex: 1;
+  flex: 1;
+}
+.flex-center-vertical {
+  -webkit-justify-content: center;
+  justify-content: center;
+}
+.flex-center-horizontal {
+  -webkit-align-items: center;
+  align-items: center;
+}
+.flex-center {
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+}
+.no-flex {
+  -webkit-flex: none;
+  flex: none;
+}
+.end {
+  color: green;
+}
+.pre {
+  color: black;
+}
+.run {
+  color: blue;
+}
+.err {
+  color: red;
+}
+body {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-flow: column;
+  flex-flow: column;
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background-image: url('../resource/image/theme.jpg');
+  background-attachment: fixed;
+  background-size: auto 100%;
+  font: 12px 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
+  -webkit-text-stroke: 1px transparent;
+  -webkit-user-select: none;
+  cursor: default;
+}
+body > * {
+  -webkit-flex: 1;
+  flex: 1;
+}
+body > header {
+  -webkit-app-region: drag;
+  -webkit-flex: none;
+  flex: none;
+  background-color: rgba(0, 0, 0, 0.3);
+  height: 80px;
+}
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='url'],
+input[type='number'] {
+  -webkit-flex: none !important;
+  flex: none !important;
+  height: 25px;
+  width: 200px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid white;
+  color: white;
+}
+input[type='checkbox'],
+input[type='radio'] {
+  border: 1px solid white;
+  height: 15px;
+  width: 15px;
+}
+button {
+  -webkit-flex: none !important;
+  flex: none !important;
+  height: 35px;
+  width: 85px;
+  margin: 5px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border: 1px solid white;
+  color: white;
+}
+.information {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-flow: row;
+  flex-flow: row;
+  margin: 15px 2px 2px 13px;
+}
+.information > * {
+  -webkit-flex: 1;
+  flex: 1;
+}
+.information .avatar {
+  -webkit-flex: none;
+  flex: none;
+  background-image: url('../resource/image/usr100.gif');
+  background-size: 100%;
+  width: 50px;
+  height: 50px;
+  border: 2px solid white;
+  box-shadow: 0 0 2px black;
+  margin-right: 10px;
+  margin-left: 2px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+.information .username {
+  color: white;
+}
+.control {
+  -webkit-app-region: no-drag;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-flow: row;
+  flex-flow: row;
+  position: absolute;
+  right: 8px;
+  top: 0;
+}
+.control > * {
+  -webkit-flex: 1;
+  flex: 1;
+}
+.control > * {
+  width: 32px;
+  height: 23px;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.control > *:hover {
+  background-color: #3498db;
+}
+.control .button-menu {
+  background-image: url('../resource/image/button_menu_white.png');
+}
+.control .button-minimize {
+  background-image: url('../resource/image/button_minimize_white.png');
+}
+.control .button-maximize {
+  background-image: url('../resource/image/button_maximize_white.png');
+}
+.control .button-restore {
+  background-image: url('../resource/image/button_restore_white.png');
+}
+.control .button-close {
+  background-image: url('../resource/image/button_close_white.png');
+}
+.control .button-close:hover {
+  background-color: #e74c3c;
+}
+.text {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-flow: column;
+  flex-flow: column;
+  -webkit-justify-content: center;
+  justify-content: center;
+  width: 480px;
+  font-size: 14px;
+}
+.text > * {
+  -webkit-flex: 1;
+  flex: 1;
+}
+.text > * {
+  -webkit-flex: none;
+  flex: none;
+}
+.dialog {
+  z-index: -1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-flow: row;
+  flex-flow: row;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  display: none;
+  background-color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  /*
+	>*:before{
+		content:'';
+		position:fixed;
+		left:0;
+		top:0;
+		height:100%;
+		width:100%;
+		.transparent-white(0.5);
+	}
+	*/
+}
+.dialog > * {
+  -webkit-flex: 1;
+  flex: 1;
+}
+.dialog > * {
+  cursor: default;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-flow: column;
+  flex-flow: column;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  height: 60%;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: none;
+  color: white;
+  margin: 20px auto;
+  /*
+		.title{
+			width: ~"calc( 100% - 20px )";
+			.no-flex;
+			margin: 0 auto;
+			color: white;
+			font-size: 20px;
+			text-align:center;
+			border-bottom:1px solid white;
+		}
+		*/
+}
+.dialog > * > * {
+  -webkit-flex: 1;
+  flex: 1;
+}
+.dialog form {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-flow: column;
+  flex-flow: column;
+}
+.dialog form > * {
+  -webkit-flex: 1;
+  flex: 1;
+}
+.dialog .create > * {
+  -webkit-flex: none;
+  flex: none;
+  margin-top: 10px;
+}
+.dialog .create ul.list {
+  /*
+			height:100%;
+			width:100%;
+			*/
+  height: calc(100% - 70px);
+  width: 480px;
+  overflow: auto;
+  margin: 0;
+}
+.dialog .create ul.list span.type {
+  color: orange;
+}
+.dialog .create ul.list span.name,
+.dialog .create ul.list span.type {
+  font-size: 16px;
+}
+.dialog .create textarea {
+  white-space: nowrap;
+  overflow: auto;
+  width: 480px;
+  height: 240px;
+}
+.dialog .setup {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-flow: row;
+  flex-flow: row;
+  display: none;
+}
+.dialog .setup > * {
+  -webkit-flex: 1;
+  flex: 1;
+}
+.dialog .setup ul.list {
+  -webkit-flex: none;
+  flex: none;
+  width: 165px;
+}
+.dialog .setup ul.list li {
+  color: white;
+  height: 30px;
+  line-height: 30px;
+  padding-left: 50px;
+}
+.dialog .setup ul.list li:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.dialog .setup ul.content {
+  height: 100%;
+  overflow-y: auto;
+}
+.dialog .update > * {
+  -webkit-flex: none;
+  flex: none;
+}
+.dialog .feedback > * {
+  -webkit-flex: none;
+  flex: none;
+  margin-top: 10px;
+}
+.dialog .feedback textarea {
+  width: 480px;
+  height: 240px;
+}
+.dialog .exit > * {
+  -webkit-flex: none;
+  flex: none;
+}
+.main {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-flow: row;
+  flex-flow: row;
+  height: 100%;
+}
+.main > * {
+  -webkit-flex: 1;
+  flex: 1;
+}
+.main aside {
+  background-color: rgba(0, 0, 0, 0.3);
+  -webkit-flex: none;
+  flex: none;
+  width: 165px;
+}
+.main aside ul li {
+  color: white;
+  height: 30px;
+  line-height: 30px;
+  padding-left: 50px;
+}
+.main aside ul li:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.main article {
+  background-color: rgba(255, 255, 255, 0.1);
+  overflow-y: auto;
+}
+body > footer {
+  -webkit-app-region: no-drag;
+  -webkit-flex: none;
+  flex: none;
+  background-color: rgba(0, 0, 0, 0.3);
+  height: 32px;
+}

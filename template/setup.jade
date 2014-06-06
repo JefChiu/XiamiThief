@@ -1,0 +1,125 @@
+ul.list
+	li(ng-click='toggle("li.login")') 帐号设置
+	li(ng-click='toggle("li.config")') 下载设置
+	li(ng-click='toggle("li.network")') 网络设置
+	li(ng-click='toggle("li.id3")') ID3设置
+ul.content
+	li.login(ng-controller='LoginCtrl')
+		form(ng-submit='login()', ng-hide='logged')
+			label(for='email') Email
+			input#email(type='email', ng-model='email', name='email')
+			label(for='password', minlength=6, maxlength=16) 密码
+			input#password(type='password', ng-model='password', name='password')
+			div(ng-show='validateUrl')
+				label(for='validateUrl') 验证码
+				input#validate(type='text', ng-model='validate', name='validate')
+				img(ng-src='{{ validateUrl }}')
+			label(for='rememberAccount')
+				input#remember(type='checkbox', ng-model='remember', name='remember')
+				| 记住我
+			button(type='submit') 登录
+
+			| 淘宝登录(测试)
+			iframe(ng-src='{{ taobaoLoginPage }}', nwdisable, nwfaketop, iframe-onload="taobaoPageLoad()")
+		div(ng-show='logged')
+			p 用户名: {{ user.name }}
+			p(ng-show='user.isVip') VIP帐号
+			p(ng-hide='user.isVip') 普通帐号
+			p(ng-show='user.isMusician') 虾米音乐人
+			p 等级: {{ user.level.name }}({{ user.level.num }}) {{ user.level.credit }}/{{ user.level.creditLimit }}
+			p 成就: {{ user.pyramid }}星
+			p 已签到{{ user.sign.num }}天
+			button(ng-click='sign()', ng-hide='user.sign.hasCheck') 签到
+			button(ng-click='logout()') 注销
+	li.config(ng-controller='ConfigCtrl', style='display:none')
+		form
+			label(for='savePath') 保存路径:
+			input#savePath(type='text', local-forage="config.savePath", ng-model='config.savePath')
+			button(ng-click='openFolderChooseDialog()') 选择
+
+			label(for='foldernameFormat') 目录名格式(仅对专辑下载有效):
+			input#foldernameFormat(type='text', local-forage="config.foldernameFormat", ng-model='config.foldernameFormat')
+			| 预览: {{ config.foldernameFormat | preview:'album' }}
+
+			label(for='filenameFormat') 文件名格式:
+			input#filenameFormat(type='text', local-forage="config.filenameFormat", ng-model='config.filenameFormat')
+			| 预览: {{ config.filenameFormat | preview:'song' }}
+
+			label(for='taskLimitMax') 最大同时任务数:
+			input#taskLimitMax(type='number', max='10', min='1', step='1', local-forage="config.taskLimitMax", ng-model='config.taskLimitMax')
+
+			label(for='hasLyric')
+				input#hasLyric(type='checkbox', local-forage='config.hasLyric', ng-model='config.hasLyric')
+				| 同时下载歌词
+
+			label(for='hasCover')
+				input#hasCover(type='checkbox', local-forage='config.hasCover', ng-model='config.hasCover')
+				| 同时下载封面
+
+			label(for='hasId3')
+				input#hasId3(type='checkbox', local-forage='config.hasId3', ng-model='config.hasId3')
+				| 添加ID3V2.3信息(更多设置在ID3设置页中)
+
+			//label(for='useArtistAlbumSavePath')
+				input#useArtistAlbumSavePath(type='checkbox', local-forage='config.useArtistAlbumSavePath', ng-model='config.useArtistAlbumSavePath')
+				| 下载专辑时以"歌手/专辑"的目录格式分类保存
+	li.network(ng-controller='NetworkCtrl', style='display:none')
+		form
+			| 代理服务器:
+			label(for='')
+				input(type='radio', name='proxySelect', local-forage='config.useProxy', ng-model='config.useProxy', value='false')
+				| 不使用
+			label(for='')
+				input(type='radio', name='proxySelect', local-forage='config.useProxy', ng-model='config.useProxy', value='true')
+				| 使用
+			label(for='proxyHost') 服务器:
+				input#proxyHost(type='url', local-forage='config.proxy.host', ng-model='config.proxy.host', enabled='config.useProxy === "true"')
+			label(for='proxyPort') 端口:
+				input#proxyPort(type='number', local-forage='config.proxy.port', ng-model='config.proxy.port', enabled='config.useProxy === "true"')
+			label(for='proxyUsername') 用户名:
+				input#proxyUsername(type='text', local-forage='config.proxy.username', ng-model='config.proxy.username', enabled='config.useProxy === "true"')
+			label(for='proxyPassword') 密码:
+				input#proxyPassword(type='password', local-forage='config.proxy.password', ng-model='config.proxy.password', enabled='config.useProxy === "true"')
+	li.id3(ng-controller='Id3Ctrl', style='display:none')
+		form
+			label(for='id3-hasTitle')
+				input#id3-hasTitle(type='checkbox', local-forage='config.id3.hasTitle', ng-model='config.id3.hasTitle')
+				| 标题 (歌名/曲名)
+			label(for='id3-hasArtist')
+				input#id3-hasArtist(type='checkbox', local-forage='config.id3.hasArtist', ng-model='config.id3.hasArtist')
+				| 参与创作的艺术家 (主唱/演奏者)
+			label(for='id3-hasAlbumArtist')
+				input#id3-hasAlbumArtist(type='checkbox', local-forage='config.id3.hasAlbumArtist', ng-model='config.id3.hasAlbumArtist')
+				| 唱片集艺术家 (主唱/演奏者/乐队)
+			label(for='id3-hasAlbum')
+				input#id3-hasAlbum(type='checkbox', local-forage='config.id3.hasAlbum', ng-model='config.id3.hasAlbum')
+				| 唱片集 (专辑名)
+			label(for='id3-hasYear')
+				input#id3-hasYear(type='checkbox', local-forage='config.id3.hasYear', ng-model='config.id3.hasYear')
+				| 年 (发行年份)
+			label(for='id3-hasTrack')
+				input#id3-hasTrack(type='checkbox', local-forage='config.id3.hasTrack', ng-model='config.id3.hasTrack')
+				| # (音轨号)
+			label(for='id3-hasGenre')
+				input#id3-hasGenre(type='checkbox', local-forage='config.id3.hasGenre', ng-model='config.id3.hasGenre')
+				| 流派 (风格)
+			label(for='id3-hasDisc')
+				input#id3-hasDisc(type='checkbox', local-forage='config.id3.hasDisc', ng-model='config.id3.hasDisc')
+				| 部分设置 (碟片号)
+			label(for='id3-hasLyric')
+				input#id3-hasLyric(type='checkbox', local-forage='config.id3.hasLyric', ng-model='config.id3.hasLyric')
+				| 歌词
+			label(for='id3-hasCover')
+				input#id3-hasCover(type='checkbox', local-forage='config.id3.hasCover', ng-model='config.id3.hasCover')
+				| 专辑封面
+			| 专辑封面尺寸:
+			label(for='')
+				input(type='radio', name='coverSize', local-forage='config.id3.cover.size', ng-model='config.id3.cover.size', value='original')
+				| 原始大小(不限制封面图片长度)
+			label(for='')
+				input(type='radio', name='coverSize', local-forage='config.id3.cover.size', ng-model='config.id3.cover.size', value='standard')
+				| 标准大小(最长边限制最大640像素, 按比例缩放, 与虾米客户端一致)
+			label(for='')
+				input(type='radio', name='coverSize', ng-model='config.id3.cover.size', value='custom')
+				| 自定义最长边长度(单位像素, 按比例缩放):
+				input#coverMaxHeight(type='number', max='1000', min='10', step='10', local-forage='config.id3.cover.maxSide', ng-model='config.id3.cover.maxSide', enabled='config.id3.cover.size === "custom"')
