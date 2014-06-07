@@ -106,75 +106,110 @@
               foldername = info.source.artist;
               break;
             default:
-              foldername = '';
+              foldername = info.source.name;
           }
           foldername = common.getSafeFoldername(foldername);
           if (info.source.type === 'album' && info.track.cd === '2') {
-            pathFolder = path.resolve(Config.savePath, "disc " + info.track.disc, foldername);
+            pathFolder = path.resolve(Config.savePath, foldername, "disc " + info.track.disc);
           } else {
             pathFolder = path.resolve(Config.savePath, foldername);
           }
           return mkdirp(pathFolder, function(err) {
             var fileDownload, savePath;
             if (!err) {
-              savePath = path.resolve(Config.savePath, foldername, filename);
+              savePath = path.resolve(pathFolder, filename);
               return async.auto({
                 coverDownload: function(cb) {
                   var coverPath, resizeImage;
-                  coverPath = path.resolve(Config.savePath, foldername, "" + info.album.id + ".jpg");
+                  coverPath = path.resolve(pathFolder, "" + info.album.id + ".jpg");
+                  console.log('coverPath', coverPath);
                   resizeImage = function(imagePath) {
-                    var id3CoverPath, maxSide;
+                    var image, maxSide;
+                    console.log('resizeImage', imagePath);
                     maxSide = Config.id3.size === 'standard' ? 640 : Config.id3.cover.maxSide;
-                    id3CoverPath = path.resolve(Config.savePath, foldername, "" + info.album.id + "_" + maxSide + ".jpg");
-                    return fs.exists(id3CoverPath, function(exists) {
-                      var image;
-                      if (exists) {
-                        return fs.readFile(id3CoverPath, cb);
-                      } else {
-                        image = new Image();
-                        image.addEventListener('load', function(e) {
-                          var canvas, ctx, data, f, height, width;
-                          canvas = document.createElement('canvas');
-                          ctx = canvas.getContext('2d');
-                          width = image.width;
-                          height = image.height;
-                          if (height < maxSide && width < maxSide) {
-                            if (imagePath.slice(0, 4) === 'http') {
-                              f = fs.createWriteStream(coverPath);
-                              f.on('finish', function() {
-                                return fs.readFile(coverPath, cb);
-                              });
-                              f.on('error', function(err) {
-                                return cb(err);
-                              });
-                              request(info.cover.url, {
-                                jar: false,
-                                headers: {},
-                                proxy: common.getProxyString()
-                              }).pipe(f);
-                            } else {
-                              fs.readFile(imagePath, cb);
-                            }
-                            return;
-                          }
-                          if (height > width) {
-                            canvas.height = maxSide;
-                            canvas.width = maxSide / height * width;
-                          } else {
-                            canvas.width = maxSide;
-                            canvas.height = maxSide / width * height;
-                          }
-                          ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, canvas.width, canvas.height);
-                          data = canvas.toDataURL('image/jpeg').replace('data:image/jpeg;base64,', '');
-                          return fs.writeFile(id3CoverPath, data, {
-                            encoding: 'base64'
-                          }, function(err) {
-                            return cb(err, new Buffer(data, 'base64'));
+                    image = new Image();
+                    image.addEventListener('load', function(e) {
+                      var canvas, ctx, data, f, height, width;
+                      console.log('load');
+                      canvas = document.createElement('canvas');
+                      ctx = canvas.getContext('2d');
+                      width = image.width;
+                      height = image.height;
+                      if (height < maxSide && width < maxSide) {
+                        if (imagePath.slice(0, 4) === 'http') {
+                          f = fs.createWriteStream(coverPath);
+                          f.on('finish', function() {
+                            return fs.readFile(coverPath, cb);
                           });
-                        });
-                        return image.src = imagePath.slice(0, 4) === 'http' ? imagePath : "file:///" + imagePath;
+                          f.on('error', cb);
+                          request(info.cover.url, {
+                            jar: false,
+                            headers: {},
+                            proxy: common.getProxyString()
+                          }).pipe(f);
+                        } else {
+                          fs.readFile(imagePath, cb);
+                        }
+                        return;
                       }
+                      if (height > width) {
+                        canvas.height = maxSide;
+                        canvas.width = maxSide / height * width;
+                      } else {
+                        canvas.width = maxSide;
+                        canvas.height = maxSide / width * height;
+                      }
+                      ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, canvas.width, canvas.height);
+                      data = canvas.toDataURL('image/jpeg').replace('data:image/jpeg;base64,', '');
+                      return cb(err, new Buffer(data, 'base64'));
                     });
+                    return image.src = imagePath.slice(0, 4) === 'http' ? imagePath : "file:///" + imagePath;
+                    /*
+                    									id3CoverPath = path.resolve pathFolder, "#{info.album.id}_#{maxSide}.jpg"
+                    									console.log 'id3CoverPath', id3CoverPath
+                    									fs.exists id3CoverPath, (exists)->
+                    										if exists
+                    											console.log 'exists'
+                    											fs.readFile id3CoverPath, cb
+                    										else
+                    											console.log 'no-exists'
+                    											image = new Image()
+                    											image.addEventListener 'load', (e)->
+                    												canvas = document.createElement 'canvas'
+                    												ctx = canvas.getContext '2d'
+                    												width = image.width
+                    												height = image.height
+                    												if height < maxSide and width < maxSide
+                    													if imagePath[...4] is 'http'
+                    														f = fs.createWriteStream coverPath
+                    														f.on 'finish', ->
+                    															fs.readFile coverPath, cb
+                    														f.on 'error', cb
+                    														request(info.cover.url,
+                    															jar: false
+                    															headers: {}
+                    															proxy: common.getProxyString()
+                    														).pipe f
+                    													else
+                    														fs.readFile imagePath, cb
+                    													return
+                    												if height > width
+                    													canvas.height = maxSide
+                    													canvas.width = maxSide / height * width
+                    												else
+                    													canvas.width = maxSide
+                    													canvas.height = maxSide / width * height
+                    												ctx.drawImage image,
+                    													0, 0,
+                    													image.width, image.height,
+                    													0, 0,
+                    													canvas.width, canvas.height
+                    												data = canvas.toDataURL('image/jpeg').replace 'data:image/jpeg;base64,', ''
+                    												fs.writeFile id3CoverPath, data, encoding: 'base64', (err)->
+                    													cb err, new Buffer(data, 'base64')
+                    											image.src = if imagePath[...4] is 'http' then imagePath else "file:///#{imagePath}"
+                    */
+
                   };
                   console.log('coverDownload');
                   if (Config.hasCover || (Config.hasId3 && Config.id3.hasCover)) {
@@ -184,9 +219,9 @@
                       if (exists) {
                         if (Config.hasId3 && Config.id3.hasCover) {
                           if (Config.id3.cover.size === 'original') {
-                            return fs.readFile(coverPath);
+                            return fs.readFile(coverPath, cb);
                           } else {
-                            return resizeImage(coverPath);
+                            return resizeImage(info.cover.url);
                           }
                         } else {
                           return cb(null);
@@ -199,7 +234,7 @@
                               if (Config.id3.cover.size === 'original') {
                                 return fs.readFile(coverPath, cb);
                               } else {
-                                return resizeImage(coverPath);
+                                return resizeImage(info.cover.url);
                               }
                             } else {
                               return cb(null);
@@ -256,10 +291,11 @@
                       });
                     }
                   } else {
+                    console.log('noLyric');
                     return cb(null);
                   }
                 },
-                writeId3Info: [
+                writeId3Info: common.getValidArray([
                   Config.id3.hasCover ? 'coverDownload' : void 0, Config.id3.hasLyric ? 'lyricDownload' : void 0, function(cb, result) {
                     var g, id3Writer, image, lyric;
                     console.log(result);
@@ -322,10 +358,11 @@
                       return cb(null);
                     }
                   }
-                ],
-                fileDownload: [
-                  'writeId3Info', fileDownload = function(cb) {
+                ]),
+                fileDownload: common.getValidArray([
+                  Config.hasId3 ? 'writeId3Info' : void 0, fileDownload = function(cb) {
                     var req;
+                    console.log('fileDownload');
                     req = http.get((function() {
                       if (Config.useProxy === 'true') {
                         return common.mixin(url.parse(location), {
@@ -371,8 +408,9 @@
                       return cb(err);
                     });
                   }
-                ]
+                ])
               }, function(err, result) {
+                console.log(err, result);
                 return cb(err);
               });
             } else {
@@ -383,7 +421,6 @@
       });
     };
     getInfo = function(item, cb) {
-      console.log(common.getProxyString());
       return async.parallel([
         function(cb) {
           var uri;

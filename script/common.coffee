@@ -166,6 +166,19 @@ getProxyString = ->
 	else
 		false
 
+getValidArray = (arr)->
+	ret = (i for i in arr when i)
+	console.log ret
+	ret
+	###
+	console.log arr
+	ret = []
+	for i in arr
+		ret.push if i
+	console.log ret
+	ret
+	###
+
 module.exports = {
 	execPath
 	config
@@ -179,4 +192,5 @@ module.exports = {
 	getSafeFilename
 	getSafeFoldername
 	getProxyString
+	getValidArray
 }

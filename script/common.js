@@ -1,6 +1,6 @@
 (function() {
   'use strict';
-  var config, execPath, fs, getProxyString, getSafeFilename, getSafeFoldername, mixin, parseLocation, path, replaceBat, replaceLast, safeFilter, toNum, user,
+  var config, execPath, fs, getProxyString, getSafeFilename, getSafeFoldername, getValidArray, mixin, parseLocation, path, replaceBat, replaceLast, safeFilter, toNum, user,
     __slice = [].slice;
 
   path = require('path');
@@ -216,6 +216,32 @@
     }
   };
 
+  getValidArray = function(arr) {
+    var i, ret;
+    ret = (function() {
+      var _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = arr.length; _i < _len; _i++) {
+        i = arr[_i];
+        if (i) {
+          _results.push(i);
+        }
+      }
+      return _results;
+    })();
+    console.log(ret);
+    return ret;
+    /*
+    	console.log arr
+    	ret = []
+    	for i in arr
+    		ret.push if i
+    	console.log ret
+    	ret
+    */
+
+  };
+
   module.exports = {
     execPath: execPath,
     config: config,
@@ -228,7 +254,8 @@
     safeFilter: safeFilter,
     getSafeFilename: getSafeFilename,
     getSafeFoldername: getSafeFoldername,
-    getProxyString: getProxyString
+    getProxyString: getProxyString,
+    getValidArray: getValidArray
   };
 
 }).call(this);

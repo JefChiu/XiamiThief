@@ -87,27 +87,69 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 					when 'artist'
 						foldername = info.source.artist
 					else
-						foldername = ''
+						foldername = info.source.name
 				foldername = common.getSafeFoldername foldername
 				if info.source.type is 'album' and info.track.cd is '2'
-					pathFolder = path.resolve Config.savePath, "disc #{info.track.disc}", foldername
+					pathFolder = path.resolve Config.savePath, foldername, "disc #{info.track.disc}"
 				else
 					pathFolder = path.resolve Config.savePath, foldername
 				mkdirp pathFolder, (err)->
 					if not err
-						savePath = path.resolve Config.savePath, foldername, filename
+						savePath = path.resolve pathFolder, filename
 						async.auto
 							coverDownload: (cb)->
 
-								coverPath = path.resolve Config.savePath, foldername, "#{info.album.id}.jpg"
+								coverPath = path.resolve pathFolder, "#{info.album.id}.jpg"
+								console.log 'coverPath', coverPath
 
 								resizeImage = (imagePath)->
+									console.log 'resizeImage', imagePath
 									maxSide = if Config.id3.size is 'standard' then 640 else Config.id3.cover.maxSide
-									id3CoverPath = path.resolve Config.savePath, foldername, "#{info.album.id}_#{maxSide}.jpg"
+
+									image = new Image()
+									image.addEventListener 'load', (e)->
+										console.log 'load'
+										canvas = document.createElement 'canvas'
+										ctx = canvas.getContext '2d'
+										width = image.width
+										height = image.height
+										if height < maxSide and width < maxSide
+											if imagePath[...4] is 'http'
+												f = fs.createWriteStream coverPath
+												f.on 'finish', ->
+													fs.readFile coverPath, cb
+												f.on 'error', cb
+												request(info.cover.url,
+													jar: false
+													headers: {}
+													proxy: common.getProxyString()
+												).pipe f
+											else
+												fs.readFile imagePath, cb
+											return
+										if height > width
+											canvas.height = maxSide
+											canvas.width = maxSide / height * width
+										else
+											canvas.width = maxSide
+											canvas.height = maxSide / width * height
+										ctx.drawImage image,
+											0, 0,
+											image.width, image.height,
+											0, 0,
+											canvas.width, canvas.height
+										data = canvas.toDataURL('image/jpeg').replace 'data:image/jpeg;base64,', ''
+										cb err, new Buffer(data, 'base64')
+									image.src = if imagePath[...4] is 'http' then imagePath else "file:///#{imagePath}"
+									###
+									id3CoverPath = path.resolve pathFolder, "#{info.album.id}_#{maxSide}.jpg"
+									console.log 'id3CoverPath', id3CoverPath
 									fs.exists id3CoverPath, (exists)->
 										if exists
+											console.log 'exists'
 											fs.readFile id3CoverPath, cb
 										else
+											console.log 'no-exists'
 											image = new Image()
 											image.addEventListener 'load', (e)->
 												canvas = document.createElement 'canvas'
@@ -119,15 +161,14 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 														f = fs.createWriteStream coverPath
 														f.on 'finish', ->
 															fs.readFile coverPath, cb
-														f.on 'error', (err)->
-															cb err
+														f.on 'error', cb
 														request(info.cover.url,
 															jar: false
 															headers: {}
 															proxy: common.getProxyString()
 														).pipe f
 													else
-														fs.readFile imagePath, cb 
+														fs.readFile imagePath, cb
 													return
 												if height > width
 													canvas.height = maxSide
@@ -144,7 +185,8 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 												fs.writeFile id3CoverPath, data, encoding: 'base64', (err)->
 													cb err, new Buffer(data, 'base64')
 											image.src = if imagePath[...4] is 'http' then imagePath else "file:///#{imagePath}"
-										
+									###
+
 								console.log 'coverDownload'
 								if Config.hasCover or (Config.hasId3 and Config.id3.hasCover)
 									console.log 'coverDownload is true'
@@ -152,9 +194,10 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 										if exists
 											if Config.hasId3 and Config.id3.hasCover
 												if Config.id3.cover.size is 'original'
-													fs.readFile coverPath
+													fs.readFile coverPath, cb
 												else
-													resizeImage coverPath
+													resizeImage info.cover.url
+													#resizeImage coverPath
 											else
 												cb null
 										else
@@ -165,7 +208,8 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 														if Config.id3.cover.size is 'original'
 															fs.readFile coverPath, cb
 														else
-															resizeImage coverPath
+															resizeImage info.cover.url
+															#resizeImage coverPath
 													else
 														cb null
 												f.on 'error', (err)->
@@ -206,8 +250,9 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 											, (error, response, body)->
 												cb error, body
 								else
+									console.log 'noLyric'
 									cb null
-							writeId3Info: ['coverDownload' if Config.id3.hasCover, 'lyricDownload' if Config.id3.hasLyric, (cb, result)->
+							writeId3Info: common.getValidArray(['coverDownload' if Config.id3.hasCover, 'lyricDownload' if Config.id3.hasLyric, (cb, result)->
 								console.log result
 								console.log 'writeId3Info'
 								if Config.hasId3
@@ -274,8 +319,9 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 									id3Writer.write cb
 								else
 									cb null
-							]
-							fileDownload: ['writeId3Info', fileDownload = (cb)->
+							])
+							fileDownload: common.getValidArray(['writeId3Info' if Config.hasId3, fileDownload = (cb)->
+								console.log 'fileDownload'
 								req = http.get (->
 										if Config.useProxy is 'true'
 											common.mixin url.parse(location),
@@ -294,11 +340,11 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 													encoding: null
 													mode: 0o666
 
-												f.on 'finish',->
+												f.on 'finish', ->
 													fs.rename "#{savePath}.download", "#{savePath}.mp3", ->
 														cb null
 
-												f.on 'error',(err)->
+												f.on 'error', (err)->
 													console.log err
 													cb err
 												res.pipe f
@@ -311,15 +357,15 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 
 								req.on 'error',(err)->
 									cb err
-							]
+							])
 							, (err, result)->
+								console.log err, result
 								cb err
 
 					else
 						cb err
 
 	getInfo = (item, cb)->
-		console.log common.getProxyString()
 		async.parallel [
 				(cb)->
 					# "http://www.xiami.com/app/xiating/album?id=#{item.id}" HTML
