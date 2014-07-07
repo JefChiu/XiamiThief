@@ -160,7 +160,6 @@
   };
 
   replaceLast = function(search, str, newStr) {
-    console.log(RegExp(str + '$'));
     return search.replace(RegExp(str + '$'), newStr);
   };
 
@@ -191,7 +190,7 @@
       return str.replace('<span>', ' ').replace('</span>', '');
     };
     safeFilename = function(str) {
-      return str.replace(/(\/|\\|\:|\*|\?|\"|\<|\>|\||\s+)/g, ' ');
+      return str.replace(/(\\|\:|\*|\?|\"|\<|\>|\||\s+)/g, ' ');
     };
     return safeFilename(removeSpan(str));
   };
@@ -231,7 +230,6 @@
       }
       return _results;
     })();
-    console.log(ret);
     return ret;
 
     /*

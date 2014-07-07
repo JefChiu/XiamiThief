@@ -80,19 +80,22 @@
         }, function(error, response, body) {
           var result;
           if (!error && response.statusCode === 200) {
-            console.log(body);
-            result = common.parseLocation(body.location);
-            if (result) {
-              return cb(null, result.trim());
+            if (body.location != null) {
+              result = common.parseLocation(body.location);
+              if (result) {
+                return cb(null, result.trim());
+              } else {
+                return cb(result);
+              }
             } else {
-              return cb(result);
+              return cb(body);
             }
           } else {
             return cb(error, '');
           }
         });
       } else {
-        return console.log('not login');
+        return console.error('not login');
       }
     };
     requestFile = function(cb) {
@@ -100,7 +103,7 @@
       info = this;
       return getLocation(this.song.id, function(err, location) {
         var filename, foldername, pathFolder, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
-        if (location) {
+        if (!err && location) {
           filename = common.replaceBat(Config.filenameFormat, ['%NAME%', info.song.name], ['%ARTIST%', info.artist.name], ['%ALBUM%', info.album.name], ['%TRACK%', info.track.id != null ? (info.track.id.length === 1 ? "0" + info.track.id : info.track.id) : ''], ['%DISC%', (_ref = info.track.disc) != null ? _ref : '']);
           filename = common.getSafeFilename(filename);
           if (Config.useDirectory) {
@@ -121,7 +124,6 @@
           } else {
             foldername = '';
           }
-          console.log(info);
           if (info.source.type === 'album' && info.track.cd === '2') {
             pathFolder = path.resolve(Config.savePath, foldername, "disc " + info.track.disc);
           } else {
@@ -134,10 +136,7 @@
               coverDownload = function(cb) {
                 var coverPath;
                 coverPath = path.resolve(pathFolder, "" + info.album.id + ".jpg");
-                console.log('coverPath', coverPath);
-                console.log('coverDownload');
                 if (Config.hasCover) {
-                  console.log('coverDownload is true');
                   return fs.exists(coverPath, function(exists) {
                     var f, req;
                     if (exists) {
@@ -167,7 +166,6 @@
                 								console.log 'coverDownload is true'
                 								fs.exists coverPath, (exists)->
                 									if exists
-                										 * TODO: Download Break To Do
                 										if Config.hasId3 and Config.id3.hasCover
                 											if Config.id3.cover.size is 'original'
                 												fs.readFile coverPath, cb
@@ -205,12 +203,10 @@
                 var image, imagePath, maxSide;
                 if (Config.hasId3 && Config.id3.hasCover) {
                   imagePath = info.cover.url;
-                  console.log('resizeImage', imagePath);
                   maxSide = Config.id3.size === 'standard' ? 640 : Config.id3.cover.maxSide;
                   image = new Image();
                   image.addEventListener('load', function(e) {
                     var canvas, ctx, data, height, width;
-                    console.log('load');
                     canvas = document.createElement('canvas');
                     ctx = canvas.getContext('2d');
                     width = image.width;
@@ -243,6 +239,14 @@
                     ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, canvas.width, canvas.height);
                     data = canvas.toDataURL('image/jpeg').replace('data:image/jpeg;base64,', '');
                     return cb(err, new Buffer(data, 'base64'));
+                  });
+                  image.addEventListener('error', function(e) {
+                    console.error(e);
+                    return cb(e != null ? e : 'Image Load: Error');
+                  });
+                  image.addEventListener('abort', function(e) {
+                    console.error(e);
+                    return cb(e != null ? e : 'Image Load: Abort');
                   });
                   return image.src = imagePath.slice(0, 4) === 'http' ? imagePath : "file:///" + imagePath;
                 } else {
@@ -297,9 +301,7 @@
                */
               lyricDownload = function(cb) {
                 var f;
-                console.log('lyricDownload');
                 if ((Config.hasLyric || (Config.hasId3 && Config.id3.hasLyric)) && info.lyric.url) {
-                  console.log('lyricDownload is true');
                   if (Config.hasLyric) {
                     f = fs.createWriteStream("" + savePath + ".lrc");
                     f.on('finish', function() {
@@ -329,16 +331,12 @@
                     });
                   }
                 } else {
-                  console.log('noLyric');
                   return cb(null);
                 }
               };
               writeId3Info = function(cb, result) {
                 var g, id3Writer, image, lyric;
-                console.log(result);
-                console.log('writeId3Info');
                 if (Config.hasId3) {
-                  console.log('writeId3Info is true');
                   id3Writer = new id3v23("" + savePath + ".download");
                   if (Config.id3.hasAlbum && info.album.name) {
                     id3Writer.setTag('TALB', info.album.name);
@@ -395,89 +393,85 @@
                   return cb(null);
                 }
               };
-              fileDownload = function(cb) {
-                console.log('fileDownload');
+              fileDownload = function(cb, result) {
+                var id3Size, _ref6;
+                id3Size = (_ref6 = result.writeId3Info) != null ? _ref6 : 0;
                 return fs.exists("" + savePath + ".mp3", function(exists) {
                   var req;
-                  if (exists) {
-                    return cb('已下载过');
-                  } else {
-                    req = http.get((function() {
-                      if (Config.useProxy === 'true') {
-                        return common.mixin(url.parse(location), {
-                          agent: tunnel.httpsOverHttp({
-                            proxy: {
-                              host: Config.proxy.host,
-                              port: Config.proxy.port,
-                              proxyAuth: "" + Config.proxy.username + ":" + Config.proxy.password
-                            }
-                          })
+                  req = http.get((function() {
+                    if (Config.useProxy === 'true') {
+                      return common.mixin(url.parse(location), {
+                        agent: tunnel.httpsOverHttp({
+                          proxy: {
+                            host: Config.proxy.host,
+                            port: Config.proxy.port,
+                            proxyAuth: "" + Config.proxy.username + ":" + Config.proxy.password
+                          }
+                        })
+                      });
+                    } else {
+                      return location;
+                    }
+                  })(), function(res) {
+                    var check, f;
+                    switch (res.statusCode) {
+                      case 200:
+                        f = fs.createWriteStream("" + savePath + ".download", {
+                          flags: 'a',
+                          encoding: null,
+                          mode: 0x1b6
                         });
-                      } else {
-                        return location;
-                      }
-                    })(), function(res) {
-                      var check, f;
-                      switch (res.statusCode) {
-                        case 200:
-                          f = fs.createWriteStream("" + savePath + ".download", {
-                            flags: 'a',
-                            encoding: null,
-                            mode: 0x1b6
-                          });
-                          f.on('finish', function() {
-                            return fs.rename("" + savePath + ".download", "" + savePath + ".mp3", function() {
-                              return $scope.$apply(function() {
-                                return cb(null);
-                              });
+                        f.on('finish', function() {
+                          return fs.rename("" + savePath + ".download", "" + savePath + ".mp3", function() {
+                            return $scope.$apply(function() {
+                              return cb(null);
                             });
                           });
-                          f.on('error', function(err) {
-                            console.log(err);
-                            return cb(err);
-                          });
-                          check = (function(timeout) {
-                            var contentLength, count, lastBytes;
-                            contentLength = Number(res.headers['content-length']);
-                            count = 0;
-                            lastBytes = 0;
-                            return function() {
-                              var nowBytes;
-                              nowBytes = f.bytesWritten;
-                              $scope.$apply(function() {
-                                return info.process = nowBytes / contentLength * 100;
-                              });
-                              if (info.process >= 100) {
-                                return f.end();
+                        });
+                        f.on('error', function(err) {
+                          console.error(err);
+                          return cb(err);
+                        });
+                        check = (function(timeout) {
+                          var contentLength, count, lastBytes;
+                          contentLength = Number(res.headers['content-length']);
+                          count = 0;
+                          lastBytes = 0;
+                          return function() {
+                            var nowBytes;
+                            nowBytes = f.bytesWritten;
+                            $scope.$apply(function() {
+                              return info.process = nowBytes / contentLength * 100;
+                            });
+                            if (info.process >= 100) {
+                              return f.end();
+                            } else {
+                              if (lastBytes === nowBytes) {
+                                count++;
                               } else {
-                                if (lastBytes === nowBytes) {
-                                  count++;
-                                } else {
-                                  count = 0;
-                                }
-                                if (count > 60) {
-                                  return f.end();
-                                } else {
-                                  return timers.setTimeout(check, timeout);
-                                }
+                                count = 0;
                               }
-                            };
-                          })(1000);
-                          check();
-                          return res.pipe(f);
-                        case 302:
-                          res.resume();
-                          location = res.headers.location;
-                          return fileDownload(cb);
-                        default:
-                          console.log(res.statusCode);
-                          return cb('无法下载');
-                      }
-                    });
-                    return req.on('error', function(err) {
-                      return cb(err);
-                    });
-                  }
+                              if (count > 60) {
+                                return f.emit('error', new Error('Download blocked'));
+                              } else {
+                                return timers.setTimeout(check, timeout);
+                              }
+                            }
+                          };
+                        })(1000);
+                        check();
+                        return res.pipe(f);
+                      case 302:
+                        res.resume();
+                        location = res.headers.location;
+                        return fileDownload(cb);
+                      default:
+                        return cb('无法下载');
+                    }
+                  });
+                  return req.on('error', function(err) {
+                    return cb(err);
+                  });
                 });
               };
               return async.auto({
@@ -487,13 +481,14 @@
                 'writeId3Info': common.getValidArray([Config.id3.hasCover ? 'resizeImage' : void 0, Config.id3.hasLyric ? 'lyricDownload' : void 0, writeId3Info]),
                 'fileDownload': common.getValidArray([Config.hasId3 ? 'writeId3Info' : void 0, fileDownload])
               }, function(err, result) {
-                console.log(err, result);
                 return cb(err);
               });
             } else {
               return cb(err);
             }
           });
+        } else {
+          return cb(err, location);
         }
       });
     };
@@ -519,8 +514,7 @@
                 list: (function() {
                   var albumArtist, albumId, albumName, artistId, artistName, cdCount, discNum, lyricUrl, pictureUrl, song, songId, songName, trackId, _i, _len, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
                   result = [];
-                  console.log(body);
-                  _ref3 = (_ref = (_ref1 = body.data) != null ? _ref1.trackList : void 0) != null ? _ref : (_ref2 = body.album) != null ? _ref2.songs : void 0;
+                  _ref3 = (_ref = body != null ? (_ref1 = body.data) != null ? _ref1.trackList : void 0 : void 0) != null ? _ref : body != null ? (_ref2 = body.album) != null ? _ref2.songs : void 0 : void 0;
                   for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
                     song = _ref3[_i];
                     songId = song.song_id;
@@ -721,7 +715,6 @@
         }
       ], function(err, result) {
         var id, song, _i, _len, _ref;
-        console.log(result);
         if (!err) {
           result = _.extend.apply(this, result);
           _ref = result.list;
@@ -846,11 +839,10 @@
             return $scope.$apply(function() {
               $scope.step = 2;
               $scope.links = '';
-              $scope.data = result;
-              return console.log(result);
+              return $scope.data = result;
             });
           } else {
-            return console.log(err, result, targets);
+            return console.error(err, result, targets);
           }
         });
       } else {
@@ -986,7 +978,7 @@
             return User.sign.num = parseInt(body);
           });
         } else {
-          return console.log(error);
+          return console.error(error);
         }
       });
     };
@@ -998,7 +990,6 @@
         return require('nw.gui').Window.get().cookies.getAll({
           domain: '.xiami.com'
         }, function(cookies) {
-          console.log(cookies);
           Config.cookie = (function() {
             var i, ret, _i, _len;
             ret = '';
@@ -1023,10 +1014,9 @@
               }
             ], function(err, result) {
               if (err) {
-                return console.log(err, result);
+                return console.error(err, result);
               } else {
                 return $scope.$apply(function() {
-                  console.log(result);
                   User.name = result.data.userInfo.nick_name;
                   User.avatar = "http://img.xiami.net/" + result.data.userInfo.avatar;
                   User.id = result.data.userInfo.user_id;
@@ -1102,7 +1092,7 @@
             }
           ], function(err, result) {
             if (err) {
-              console.log(err, result);
+              console.error(err, result);
               return cb();
             } else {
               Config.cookie = result;
@@ -1126,7 +1116,7 @@
             }
           ], function(err, result) {
             if (err) {
-              console.log(err, result);
+              console.error(err, result);
               return cb();
             } else {
               return $scope.$apply(function() {

@@ -57,21 +57,23 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 				proxy: common.getProxyString()
 				, (error, response, body)->
 					if not error and response.statusCode is 200
-						console.log body
-						result = common.parseLocation body.location
-						if result
-							cb null, result.trim()
+						if body.location?
+							result = common.parseLocation body.location
+							if result
+								cb null, result.trim()
+							else
+								cb result
 						else
-							cb result
+							cb body
 					else
 						cb error, ''
 		else
-			console.log 'not login'
+			console.error 'not login'
 
 	requestFile = (cb)->
 		info = this
 		getLocation this.song.id, (err, location)->
-			if location
+			if not err and location
 				filename = common.replaceBat Config.filenameFormat,
 					['%NAME%', info.song.name],
 					['%ARTIST%', info.artist.name],
@@ -97,7 +99,7 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 					foldername = common.getSafeFoldername foldername
 				else
 					foldername = ''
-				console.log info
+				# console.log info
 				if info.source.type is 'album' and info.track.cd is '2'
 					pathFolder = path.resolve Config.savePath, foldername, "disc #{info.track.disc}"
 				else
@@ -108,11 +110,11 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 						
 						coverDownload = (cb)->
 							coverPath = path.resolve pathFolder, "#{info.album.id}.jpg"
-							console.log 'coverPath', coverPath
+							# console.log 'coverPath', coverPath
 
-							console.log 'coverDownload'
+							# console.log 'coverDownload'
 							if Config.hasCover
-								console.log 'coverDownload is true'
+								# console.log 'coverDownload is true'
 								fs.exists coverPath, (exists)->
 									if exists
 										cb null
@@ -134,7 +136,6 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 								console.log 'coverDownload is true'
 								fs.exists coverPath, (exists)->
 									if exists
-										# TODO: Download Break To Do
 										if Config.hasId3 and Config.id3.hasCover
 											if Config.id3.cover.size is 'original'
 												fs.readFile coverPath, cb
@@ -171,13 +172,13 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 						resizeImage = (cb)->
 							if Config.hasId3 and  Config.id3.hasCover
 								imagePath = info.cover.url
-								console.log 'resizeImage', imagePath
+								# console.log 'resizeImage', imagePath
 								maxSide = if Config.id3.size is 'standard' then 640 else Config.id3.cover.maxSide
 
 								image = new Image()
 
 								image.addEventListener 'load', (e)->
-									console.log 'load'
+									# console.log 'load'
 									canvas = document.createElement 'canvas'
 									ctx = canvas.getContext '2d'
 									width = image.width
@@ -212,6 +213,13 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 										canvas.width, canvas.height
 									data = canvas.toDataURL('image/jpeg').replace 'data:image/jpeg;base64,', ''
 									cb err, new Buffer(data, 'base64')
+
+								image.addEventListener 'error', (e)->
+									console.error e
+									cb e ? 'Image Load: Error'
+								image.addEventListener 'abort', (e)->
+									console.error e
+									cb e ? 'Image Load: Abort'
 
 								image.src = if imagePath[...4] is 'http' then imagePath else "file:///#{imagePath}"
 							else
@@ -263,9 +271,9 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 						###
 						
 						lyricDownload = (cb)->
-							console.log 'lyricDownload'
+							# console.log 'lyricDownload'
 							if (Config.hasLyric or (Config.hasId3 and Config.id3.hasLyric)) and info.lyric.url
-								console.log 'lyricDownload is true'
+								# console.log 'lyricDownload is true'
 								if Config.hasLyric
 									f = fs.createWriteStream "#{savePath}.lrc"
 									f.on 'finish', ->
@@ -289,14 +297,14 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 										, (error, response, body)->
 											cb error, body
 							else
-								console.log 'noLyric'
+								# console.log 'noLyric'
 								cb null
 								
 						writeId3Info = (cb, result)->
-							console.log result
-							console.log 'writeId3Info'
+							# console.log result
+							# console.log 'writeId3Info'
 							if Config.hasId3
-								console.log 'writeId3Info is true'
+								# console.log 'writeId3Info is true'
 								id3Writer = new id3v23("#{savePath}.download")
 								# TALB 专辑名
 								if Config.id3.hasAlbum and info.album.name
@@ -360,75 +368,77 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 							else
 								cb null
 
-						fileDownload = (cb)->
-							console.log 'fileDownload'
+						fileDownload = (cb, result)->
+							# console.log 'fileDownload'
+							# console.log result, info
+							id3Size = result.writeId3Info ? 0
+
 							fs.exists "#{savePath}.mp3", (exists)->
-								if exists
-									cb '已下载过'
-								else
-									req = http.get (->
-											if Config.useProxy is 'true'
-												common.mixin url.parse(location),
-													agent: tunnel.httpsOverHttp
-														proxy:
-															host: Config.proxy.host
-															port: Config.proxy.port
-															proxyAuth: "#{Config.proxy.username}:#{Config.proxy.password}"
-											else
-												location
-										)(), (res)->
-											switch res.statusCode
-												when 200
-													f = fs.createWriteStream "#{savePath}.download",
-														flags: 'a'
-														encoding: null
-														mode: 0o666
+								# TODO: 判断文件大小避免重复下载
+								req = http.get (->
+										if Config.useProxy is 'true'
+											common.mixin url.parse(location),
+												agent: tunnel.httpsOverHttp
+													proxy:
+														host: Config.proxy.host
+														port: Config.proxy.port
+														proxyAuth: "#{Config.proxy.username}:#{Config.proxy.password}"
+										else
+											location
+									)(), (res)->
+										switch res.statusCode
+											when 200
+												f = fs.createWriteStream "#{savePath}.download",
+													flags: 'a'
+													encoding: null
+													mode: 0o666
 
-													f.on 'finish', ->
-														fs.rename "#{savePath}.download", "#{savePath}.mp3", ->
-															$scope.$apply ->
-																cb null
+												f.on 'finish', ->
+													fs.rename "#{savePath}.download", "#{savePath}.mp3", ->
+														$scope.$apply ->
+															cb null
 
-													f.on 'error', (err)->
-														console.log err
-														cb err
+												f.on 'error', (err)->
+													console.error err
+													cb err
 
-													check = ((timeout)->
-														contentLength = Number res.headers['content-length']
-														count = 0
-														lastBytes = 0
+												check = ((timeout)->
+													contentLength = Number res.headers['content-length']
+													count = 0
+													lastBytes = 0
 
-														->
-															nowBytes = f.bytesWritten
-															$scope.$apply ->
-																info.process = nowBytes / contentLength * 100
-															if info.process >= 100
-																f.end()
+													->
+														nowBytes = f.bytesWritten
+														$scope.$apply ->
+															info.process = nowBytes / contentLength * 100
+														if info.process >= 100
+															f.end()
+														else
+															if lastBytes is nowBytes
+																count++
 															else
-																if lastBytes is nowBytes
-																	count++
-																else
-																	count = 0
+																count = 0
 
-																if count > 60
-																	f.end()
-																else
-																	timers.setTimeout(check, timeout)
-													)(1000)
+															if count > 60
+																f.emit 'error', new Error('Download blocked')
+															else
+																timers.setTimeout(check, timeout)
+												)(1000)
 
-													check()
+												check()
 
-													res.pipe f
-												when 302
-													res.resume()
-													location = res.headers.location
-													fileDownload cb
-												else
-													console.log res.statusCode
-													cb '无法下载'
+												res.pipe f
+												# console.log f
+											when 302
+												res.resume()
+												location = res.headers.location
+												fileDownload cb
+											else
+												# console.log res.statusCode
+												cb '无法下载'
 
-									req.on 'error',(err)->
-										cb err
+								req.on 'error',(err)->
+									cb err
 										
 						async.auto
 							'coverDownload': coverDownload
@@ -437,10 +447,12 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 							'writeId3Info': common.getValidArray ['resizeImage' if Config.id3.hasCover, 'lyricDownload' if Config.id3.hasLyric, writeId3Info]
 							'fileDownload': common.getValidArray ['writeId3Info' if Config.hasId3, fileDownload]
 						, (err, result)->
-							console.log err, result
+							# console.log err, result
 							cb err
 					else
 						cb err
+			else
+				cb err, location
 
 	getInfo = (item, cb)->
 		async.parallel [
@@ -461,8 +473,8 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 								id: item.id
 								list: (->
 										result = []
-										console.log body
-										for song in body.data?.trackList ? body.album?.songs # web: trackList	android: songs
+										# console.log body
+										for song in body?.data?.trackList ? body?.album?.songs # web: trackList	android: songs
 											songId = song.song_id
 											songName = ent.decode song.name ? song.title # web: title	android: name
 											albumId = song.albumId ? song.album_id
@@ -601,7 +613,7 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 					else
 						cb null, {}
 		], (err, result)->
-			console.log result
+			# console.log result
 			if not err
 				result = _.extend.apply this, result
 				for song, id in result.list
@@ -686,10 +698,10 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 						$scope.step = 2
 						$scope.links = ''
 						$scope.data = result
-						console.log result
+						# console.log result
 												# if data.list[0].source.type is 'album' and info.track.cd is '2'
 				else
-					console.log err, result, targets
+					console.error err, result, targets
 		else
 			alert '未输入有效的链接'
 
@@ -798,7 +810,7 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
 						User.sign.hasCheck = true
 						User.sign.num = parseInt body
 				else
-					console.log error
+					console.error error
 
 	$scope.loginPageLoad = ->
 		iframe = document.querySelector 'iframe.loginPage'
@@ -808,7 +820,7 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
 			require('nw.gui').Window.get().cookies.getAll
 					domain: '.xiami.com'
 				,(cookies)->
-					console.log cookies
+					# console.log cookies
 					Config.cookie = (->
 						ret = ''
 						for i in cookies
@@ -829,10 +841,10 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
 									cb null, JSON.parse body
 							],(err, result)->
 								if err
-									console.log err, result
+									console.error err, result
 								else
 									$scope.$apply ->
-										console.log result
+										# console.log result
 										User.name = result.data.userInfo.nick_name
 										User.avatar = "http://img.xiami.net/#{result.data.userInfo.avatar}"
 										User.id = result.data.userInfo.user_id
@@ -893,7 +905,7 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
 							cb null, response.headers['set-cookie']?.toString()
 					],(err, result)->
 						if err
-							console.log err, result
+							console.error err, result
 							cb()
 						else
 							Config.cookie = result
@@ -912,7 +924,7 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
 							cb null, JSON.parse body
 					],(err, result)->
 						if err
-							console.log err, result
+							console.error err, result
 							cb()
 						else
 							$scope.$apply ->

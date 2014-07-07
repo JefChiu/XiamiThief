@@ -131,7 +131,7 @@ parseLocation = (param1) ->
 # parseLocation
 
 replaceLast = (search, str, newStr)->
-	console.log RegExp(str + '$')
+	# console.log RegExp(str + '$')
 	search.replace RegExp(str + '$'), newStr
 
 replaceBat = (str, args...)->
@@ -144,11 +144,12 @@ toNum = (obj)->
 	if isNaN obj then Number obj else obj
 
 safeFilter = (str) ->
-    removeSpan = (str)->
-        str.replace('<span>', ' ').replace '</span>', ''
-    safeFilename = (str)->
-        str.replace /(\/|\\|\:|\*|\?|\"|\<|\>|\||\s+)/g, ' '
-    safeFilename removeSpan str
+	removeSpan = (str)->
+		str.replace('<span>', ' ').replace '</span>', ''
+	safeFilename = (str)->
+		str.replace /(\\|\:|\*|\?|\"|\<|\>|\||\s+)/g, ' '
+		# str.replace /(\/|\\|\:|\*|\?|\"|\<|\>|\||\s+)/g, ' '
+	safeFilename removeSpan str
 
 getSafeFoldername = (str)->
 	str = str.replace /^\.+$/, '_'
@@ -169,7 +170,7 @@ getProxyString = ->
 
 getValidArray = (arr)->
 	ret = (i for i in arr when i)
-	console.log ret
+	# console.log ret
 	ret
 	###
 	console.log arr
