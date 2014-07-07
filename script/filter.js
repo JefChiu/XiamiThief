@@ -17,8 +17,7 @@
       if (input != null) {
         return {
           song: function() {
-            input = common.replaceBat(input, ['%NAME%', '歌名'], ['%ARTIST%', '歌手'], ['%ALBUM%', '专辑'], ['%TRACK%', '音轨号'], ['%DISC%', '碟片号']);
-            return "" + input + ".mp3";
+            return input = common.replaceBat(input, ['%NAME%', '歌名'], ['%ARTIST%', '歌手'], ['%ALBUM%', '专辑'], ['%TRACK%', '音轨号'], ['%DISC%', '碟片号']);
           },
           album: function() {
             return input = common.replaceBat(input, ['%NAME%', '专辑名'], ['%ARTIST%', '歌手'], ['%COMPANY%', '唱片公司'], ['%TIME%', '发行日期'], ['%LANGUAGE%', '语言']);
@@ -41,6 +40,7 @@
     };
   });
 
+
   /*
   App.filter 'group', ->
   	_.memoize (arr)->
@@ -48,7 +48,6 @@
   			_.groupBy arr, (obj)->
   				[obj.source.type, obj.source.id]
   		, 100
-  */
-
+   */
 
 }).call(this);

@@ -1,5 +1,6 @@
 (function() {
   'use strict';
+
   /*
   App.directive 'dialog',->
   	restrict: 'E'
@@ -15,16 +16,17 @@
   		element.on 'input', (event)->
   			element.height(0)
   			element.height borderWidth + Math.max(element[0].scrollHeight, min)
-  */
-
+   */
   App.directive('enabled', function() {
     return {
       priority: 100,
       link: function(scope, element, attr) {
-        var ngBooleanAttrWatchAction;
-        return scope.$watch(attr['enabled'], ngBooleanAttrWatchAction = function(value) {
+        var ngBooleanAttrWatchAction, setValue;
+        setValue = function(value) {
           return attr.$set('disabled', !value);
-        });
+        };
+        setValue(attr['enabled']);
+        return scope.$watch(attr['enabled'], ngBooleanAttrWatchAction = setValue);
       }
     };
   });
@@ -34,37 +36,48 @@
       restrict: 'E',
       templateUrl: '../template/task.html',
       replace: true,
-      link: function(scope, element, attrs) {}
+      link: function(scope, element, attr) {}
     };
   });
 
   App.directive('process', function() {
     return function(scope, element, attr) {
-      return scope.$watch(function() {
-        return scope.task.process;
-      }, function(newValue, oldValue) {
-        if (newValue) {
-          if (newValue >= 0) {
-            return element.css({
-              'backgroundSize': "" + newValue + "% 40px"
-            });
-          } else {
-            element.css({
-              'backgroundSize': '100% 40px'
-            });
-            return element.css({
-              'backgroundImage': '-webkit-linear-gradient(top, #e74c3c, #e74c3c)'
-            });
-          }
-        }
+      return scope.$watch(attr['process'], function(value) {
+        return element.css({
+          'backgroundSize': "" + value + "% 40px"
+        });
       });
     };
   });
 
+  App.directive('state', [
+    'State', function(State) {
+      return function(scope, element, attr) {
+        return scope.$watch(attr['state'], function(value) {
+          var color;
+          switch (value) {
+            case State.Ready:
+              color = 'rgba(0,0,0,0)';
+              break;
+            case State.Running:
+              color = 'rgba(0, 0, 255, 0.5)';
+              break;
+            case State.Fail:
+              color = 'rgba(255, 0, 0, 0.5)';
+              break;
+            case State.Success:
+              color = 'rgba(0, 255, 0, 0.5)';
+          }
+          return element.css('backgroundImage', "-webkit-linear-gradient(top, " + color + ", " + color + ")");
+        });
+      };
+    }
+  ]);
+
   App.directive('iframeOnload', function($parse) {
-    return function(scope, element, attrs) {
+    return function(scope, element, attr) {
       var fn;
-      fn = $parse(attrs['iframeOnload']);
+      fn = $parse(attr['iframeOnload']);
       return element.on('load', function(event) {
         return scope.$apply(function() {
           return fn(scope, {
@@ -72,6 +85,18 @@
           });
         });
       });
+    };
+  });
+
+  App.directive('imageSize', function() {
+    return function(scope, element, attr) {
+      var setSize;
+      setSize = function(value) {
+        attr.$set('height', value);
+        return attr.$set('width', value);
+      };
+      setSize(attr['imageSize']);
+      return scope.$watch(attr['imageSize'], setSize);
     };
   });
 

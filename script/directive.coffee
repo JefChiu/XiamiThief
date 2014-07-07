@@ -20,30 +20,48 @@ App.directive 'autoHeight',($parse)->
 App.directive 'enabled', ->
 	priority: 100,
 	link: (scope, element, attr)->
-		scope.$watch attr['enabled'], ngBooleanAttrWatchAction = (value)->
+		setValue = (value)->
 			attr.$set 'disabled', not value
+		setValue attr['enabled']
+		scope.$watch attr['enabled'], ngBooleanAttrWatchAction = setValue
 
 App.directive 'task', ->
 	restrict: 'E'
 	templateUrl: '../template/task.html'
 	replace: true
-	link: (scope, element, attrs)->
+	link: (scope, element, attr)->
 
 App.directive 'process', ->
 	(scope, element, attr)->
-		scope.$watch ->
-				scope.task.process
-			,(newValue, oldValue)->
-				if newValue
-					if newValue >= 0
-						element.css('backgroundSize': "#{newValue}% 40px")
-					else
-						element.css('backgroundSize': '100% 40px')
-						element.css('backgroundImage': '-webkit-linear-gradient(top, #e74c3c, #e74c3c)')
+		scope.$watch attr['process'], (value)->
+			element.css 'backgroundSize': "#{value}% 40px"
+
+App.directive 'state', ['State', (State)->
+	(scope, element, attr)->
+		scope.$watch attr['state'], (value)->
+			switch value
+				when State.Ready
+					color = 'rgba(0,0,0,0)'
+				when State.Running
+					color = 'rgba(0, 0, 255, 0.5)'
+				when State.Fail
+					color = 'rgba(255, 0, 0, 0.5)'
+				when State.Success
+					color = 'rgba(0, 255, 0, 0.5)'
+			element.css 'backgroundImage', "-webkit-linear-gradient(top, #{color}, #{color})"
+]
 
 App.directive 'iframeOnload', ($parse)->
-	(scope, element, attrs)->
-		fn = $parse attrs['iframeOnload']
+	(scope, element, attr)->
+		fn = $parse attr['iframeOnload']
 		element.on 'load', (event)->
 			scope.$apply ->
 				fn scope, $event:event
+				
+App.directive 'imageSize', ->
+	(scope, element, attr)->
+		setSize = (value)->
+			attr.$set 'height', value
+			attr.$set 'width', value
+		setSize attr['imageSize']
+		scope.$watch attr['imageSize'], setSize

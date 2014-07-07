@@ -17,7 +17,6 @@ App.filter 'preview', ->
 					['%ALBUM%', '专辑']
 					['%TRACK%', '音轨号']
 					['%DISC%', '碟片号']
-				"#{input}.mp3"
 			album: ->
 				input = common.replaceBat input,
 					['%NAME%', '专辑名']

@@ -6,7 +6,7 @@ fs = require 'fs'
 execPath = path.dirname process.execPath
 
 config = 
-	savePath: execPath
+	savePath: path.resolve execPath, 'Music'
 	foldernameFormat: '%NAME%'
 	filenameFormat: '%NAME%'
 	taskLimitMax: 3
@@ -15,6 +15,7 @@ config =
 	hasCover: true
 	hasId3: true
 	useProxy: 'false'
+	useDirectory: true
 	proxy:
 		host: ''
 		port: 80
@@ -179,6 +180,9 @@ getValidArray = (arr)->
 	ret
 	###
 
+filenamerCreator = ->
+	# TODO
+	
 module.exports = {
 	execPath
 	config

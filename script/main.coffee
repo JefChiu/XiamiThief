@@ -3,13 +3,14 @@
 gui = require 'nw.gui'
 pkg = require '../package.json'
 path = require 'path'
+timers = require 'timers'
 async = require 'async'
 queue = require '../script/queue'
 common = require '../script/common'
 
 process.on('uncaughtException',(err)->
-    console.error err
-    console.error err.stack
+	console.error err
+	console.error err.stack
 )
 
 dir = 
@@ -17,12 +18,24 @@ dir =
 
 window.win = gui.Window.get()
 
-#win.showDevTools()
-
 #window.addEventListener 'load', ->win.show()
 
 #window.openBrowser = gui.Shell.openExternal
 
+common.loadLoginPage = ->
+	if not common.user.logged
+    iframe = document.querySelector 'iframe.loginPage'
+    cookies = require('nw.gui').Window.get().cookies
+    removeCookie = (args...)->
+      for i in args
+        cookies.remove url: 'http://www.xiami.com', name: i
+        cookies.remove url: 'http://xiami.com', name: i
+        cookies.remove url: 'https://www.xiami.com', name: i
+        cookies.remove url: 'https://xiami.com', name: i
+    removeCookie '_xiamitoken', '_unsign_token', 'member_auth', 'user', 'isg', 't_sign_auth', 'ahtena_is_show'
+    iframe.src = ''
+    iframe.src = 'https://login.xiami.com/member/login'
+		
 window.dialog = (element)->
 	element = document.querySelectorAll element if _.isString element
 	if not (element.length or element.length is 0) #Not NodeList or Array
@@ -53,48 +66,48 @@ window.menu = (->
 		new gui.MenuItem options
 
 	menu.append menuItem
-		type:'normal'
-		label:'新建下载'
-		click:->
+		type: 'normal'
+		label: '新建下载'
+		click: ->
 			dialog('.dialog .create').show()
+	menu.append menuItem
+		type: 'separator'
 
 	menu.append menuItem
-		type:'separator'
-
-	menu.append menuItem
-		type:'normal'
-		label:'软件设置'
-		click:->
+		type: 'normal'
+		label: '软件设置'
+		click: ->
 			dialog('.dialog .setup').show()
+			common.loadLoginPage()
 	###
 	menu.append menuItem
-		type:'separator'
+		type: 'separator'
 
 	menu.append menuItem
-		type:'normal'
-		label:'反馈'
-		click:->
+		type: 'normal'
+		label: '反馈'
+		click: ->
 			dialog('.dialog .feedback').show()
 
 	menu.append menuItem
-		type:'normal'
-		label:'检查更新'
-		click:->
+		type: 'normal'
+		label: '检查更新'
+		click: ->
 			dialog('.dialog .update').show()
 
 	menu.append menuItem
-		type:'normal'
-		label:'关于XiamiThief'
-		click:->
+		type: 'normal'
+		label: '关于XiamiThief'
+		click: ->
 			dialog('.dialog .about').show()
 	###
 	menu.append menuItem
-		type:'separator'
+		type: 'separator'
 
 	menu.append menuItem
-		type:'normal'
-		label:'退出'
-		click:->
+		type: 'normal'
+		label: '退出'
+		click: ->
 			if window.tray?
 				win.close()
 			else
@@ -107,12 +120,27 @@ win.on 'close',->
 	@hide()
 	@close true
 
-###
+bgImg = new Image()
+
+bgImg.addEventListener 'load', ->
+	bgCanvas = document.querySelector('canvas#bg')
+	bgCanvas.width = win.width
+	bgCanvas.height = win.height
+	stackBlurImage bgImg, bgCanvas, 100
+	win.show()
+
 win.on 'resize',->
+	###
+	bgCanvas = document.querySelector('canvas#bg')
+	bgCanvas.width = win.width
+	bgCanvas.height = win.height
+	stackBlurImage bgImg, bgCanvas, 100
+	###
+	###
 	width = if win.width > 800 then win.width else 800
 	height = if win.height > 600 then win.height else 600
 	win.resizeTo width, height
-###
+	###
 
 win.on 'minimize', ->
 	window.tray = new gui.Tray
@@ -135,76 +163,87 @@ win.on 'new-win-policy', (frame, url, policy)->
 
 #window.clipboard = gui.Clipboard.get()
 
-App.factory 'User',->
+App.factory 'User', ->
 	common.user
+	
+App.factory 'State', ->
+	Ready: 0
+	Running: 1
+	Fail: 2
+	Success: 3
 
-App.factory 'TaskQueue',['$rootScope', 'Config', 'quickRepeatList', ($rootScope, Config, quickRepeatList)->
-		queue = (concurrency = 1)->
-			q=
-				pre: []
-				run: []
-				end: []
-				err: []
-				push: (args...)->
-					q.pre.push.apply q.pre, args
-					q.preToRun()
-				preToRun: ->
-					console.log 'preToRun'
-					#console.log q.pre.length, q.run.length, q.end.length, q.err.length, q.pre.length + q.run.length + q.end.length + q.err.length
-					free = concurrency - q.run.length
-					#console.log "#{concurrency} - #{q.run.length} = #{free}"
-					#console.log _.clone(q.pre), _.clone(q.run), _.clone(q.end), _.clone(q.err)
-					if free > 0
-						while free--
-						#loop
-							if q.pre.length > 0
-								((task)->
-									task.run (err, data)->
-										i = _.indexOf(q.run, task)
-										if not err
-											q.end.push task
-										else
-											q.err.push task
-										q.run.splice i, 1
-										_.defer quickRepeatList.pre, _.groupBy q.pre, (obj)->
-											[obj.source.type, obj.source.id]
-										_.defer quickRepeatList.err, _.groupBy q.err, (obj)->
-											[obj.source.type, obj.source.id]
-										_.defer quickRepeatList.run, _.groupBy q.run, (obj)->
-											[obj.source.type, obj.source.id]
-										_.defer quickRepeatList.end, _.groupBy q.end, (obj)->
-											[obj.source.type, obj.source.id]
-										###
-										try
-											$rootScope.$apply()
-										catch e
-											console.log e
-										###
-										q.preToRun()
-									q.run.push task
-								)(q.pre.shift()) # 对task闭包
-							else
-								break
-							#break unless free--
-					_.defer quickRepeatList.pre, _.groupBy q.pre, (obj)->
-						[obj.source.type, obj.source.id]
-					_.defer quickRepeatList.err, _.groupBy q.err, (obj)->
-						[obj.source.type, obj.source.id]
-					_.defer quickRepeatList.run, _.groupBy q.run, (obj)->
-						[obj.source.type, obj.source.id]
-					_.defer quickRepeatList.end, _.groupBy q.end, (obj)->
-						[obj.source.type, obj.source.id]
-				concurrency: (value)->
-					concurrency = value if value?
-					concurrency
-		q = queue Config.taskLimitMax
-	]
+App.factory 'TaskQueue', ['$rootScope', 'Config', 'quickRepeatList', 'State', ($rootScope, Config, quickRepeatList, State)->
+	queue = (concurrency = Config.taskLimitMax)->
+		running = 0
+		refresh = ->
+			_.defer quickRepeatList.task, q.list
+		q = 
+			list: []
+			push: (args...)->
+				for i in args
+					i.state = State.Ready
+					i.process = 0
+					for j in i.list
+						j.state = State.Ready
+						i.process = 0
+				Array::push.apply q.list, args
+				q.dirtyCheck()
+			dirtyCheck: ->
+				console.log 'list:', q.list
+				if running < concurrency
+					for c in q.list
+						switch c.state
+							when State.Ready, State.Running
+								total = c.list.length
+								count = 0
+								for i in c.list
+									switch i.state
+										when State.Ready
+											i.state = State.Running
+											i.run ((i)->
+												(err, data)->
+													console.log 'info: ', i
+													console.log 'err:', err
+													i.state = if err then State.Fail else State.Success
+													i.process = 100
+													running--
+													refresh()
+													q.dirtyCheck()
+											)(i)
+											running++
+											refresh()
+											return if running >= concurrency
+										when State.Fail, State.Success
+											count++
+								if count is total
+									c.state = State.Success
+				refresh()
+			refresh: refresh
+			concurrency: ->
+				concurrency = value if value?
+				concurrency
+	q = queue()
+
+	timers.setInterval q.refresh, 1000
+
+	q
+]
 
 App.controller 'TaskCtrl',($scope, TaskQueue, quickRepeatList)->
+	$scope.showCreateDialog = ->
+		dialog('.dialog .create').show()
+	$scope.showSetupDialog = ->
+		dialog('.dialog .setup').show()
+		common.loadLoginPage()
+		
+	$scope.list = TaskQueue.list
+
+	###
 	$scope.pre = TaskQueue.pre
 	$scope.err = TaskQueue.err
 	$scope.run = TaskQueue.run
 	$scope.end = TaskQueue.end
+	###
 
 App.controller 'InfoCtrl',($scope,User)->
 	$scope.user = User
@@ -224,8 +263,13 @@ $ ->
 		false
 
 	$(document).keyup (e)->
-		if e.keyCode is 27 # esc key
-			dialogAllHide()
+		switch e.keyCode
+			when 27 # Esc
+				dialogAllHide()
+			when 123 # F12
+				win.showDevTools()
+			when 13 # Enter
+				dialog('.dialog .create').show()
 
 	$(document).keydown (e)->
 		if e.keyCode is 93 # menu key
@@ -235,4 +279,4 @@ $ ->
 	$('.dialog>*').click (e)->
 		e.stopPropagation()
 
-	win.show()
+	bgImg.src = path.resolve common.execPath, 'bg' #'../resource/image/111.jpg'

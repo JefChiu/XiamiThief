@@ -18,10 +18,13 @@ tunnel = require 'tunnel'
 fs = require 'fs'
 url = require 'url'
 path = require 'path'
+timers = require 'timers'
 mkdirp = require 'mkdirp'
 ent = require 'ent'
 {id3v23} = require '../script/id3v2'
 genre = require '../script/genre'
+
+http.globalAgent.maxSockets = Infinity
 
 App.factory 'Config',->
 	common.config
@@ -41,7 +44,7 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 	$scope.data = []
 
 	getLocation = (sid, cb)->
-		if true or user.logged
+		if true or User.logged
 			request
 				url: "http://www.xiami.com/song/gethqsong/sid/#{sid}"
 				json: 'body'
@@ -70,25 +73,31 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 		getLocation this.song.id, (err, location)->
 			if location
 				filename = common.replaceBat Config.filenameFormat,
-							['%NAME%', info.song.name]
-							['%ARTIST%', info.artist.name]
-							['%ALBUM%', info.album.name]
-							['%TRACK%', if info.track.id? then (if info.track.id.length is 1 then "0#{info.track.id}" else info.track.id) else '']
-							['%DISC%', info.track.disc ? '']
+					['%NAME%', info.song.name],
+					['%ARTIST%', info.artist.name],
+					['%ALBUM%', info.album.name],
+					['%TRACK%', if info.track.id? then (if info.track.id.length is 1 then "0#{info.track.id}" else info.track.id) else ''],
+					['%DISC%', info.track.disc ? '']
 				filename = common.getSafeFilename filename
-				switch info.source.type
-					when 'album'
-						foldername = common.replaceBat Config.foldernameFormat,
-									['%NAME%', info.source.name ? '']
-									['%ARTIST%', info.source.artist ? '']
-									['%COMPANY%', info.source.company ? '']
-									['%TIME%', info.source.time ? '']
-									['%LANGUAGE%', info.source.language ? '']
-					when 'artist'
-						foldername = info.source.artist
-					else
-						foldername = info.source.name
-				foldername = common.getSafeFoldername foldername
+				if Config.useDirectory
+					switch info.source.type
+						when 'album'
+							foldername = common.replaceBat Config.foldernameFormat,
+								['%NAME%', info.source.name ? ''],
+								['%ARTIST%', info.source.artist ? ''],
+								['%COMPANY%', info.source.company ? ''],
+								['%TIME%', info.source.time ? ''],
+								['%LANGUAGE%', info.source.language ? '']
+						when 'artist'
+							foldername = info.source.artist
+						when 'showcollect'
+							foldername = info.source.name
+						else
+							foldername = ''
+					foldername = common.getSafeFoldername foldername
+				else
+					foldername = ''
+				console.log info
 				if info.source.type is 'album' and info.track.cd is '2'
 					pathFolder = path.resolve Config.savePath, foldername, "disc #{info.track.disc}"
 				else
@@ -96,416 +105,512 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 				mkdirp pathFolder, (err)->
 					if not err
 						savePath = path.resolve pathFolder, filename
-						async.auto
-							coverDownload: (cb)->
+						
+						coverDownload = (cb)->
+							coverPath = path.resolve pathFolder, "#{info.album.id}.jpg"
+							console.log 'coverPath', coverPath
 
-								coverPath = path.resolve pathFolder, "#{info.album.id}.jpg"
-								console.log 'coverPath', coverPath
-
-								resizeImage = (imagePath)->
-									console.log 'resizeImage', imagePath
-									maxSide = if Config.id3.size is 'standard' then 640 else Config.id3.cover.maxSide
-
-									image = new Image()
-									image.addEventListener 'load', (e)->
-										console.log 'load'
-										canvas = document.createElement 'canvas'
-										ctx = canvas.getContext '2d'
-										width = image.width
-										height = image.height
-										if height < maxSide and width < maxSide
-											if imagePath[...4] is 'http'
-												f = fs.createWriteStream coverPath
-												f.on 'finish', ->
-													fs.readFile coverPath, cb
-												f.on 'error', cb
-												request(info.cover.url,
-													jar: false
-													headers: {}
-													proxy: common.getProxyString()
-												).pipe f
-											else
-												fs.readFile imagePath, cb
-											return
-										if height > width
-											canvas.height = maxSide
-											canvas.width = maxSide / height * width
-										else
-											canvas.width = maxSide
-											canvas.height = maxSide / width * height
-										ctx.drawImage image,
-											0, 0,
-											image.width, image.height,
-											0, 0,
-											canvas.width, canvas.height
-										data = canvas.toDataURL('image/jpeg').replace 'data:image/jpeg;base64,', ''
-										cb err, new Buffer(data, 'base64')
-									image.src = if imagePath[...4] is 'http' then imagePath else "file:///#{imagePath}"
-									###
-									id3CoverPath = path.resolve pathFolder, "#{info.album.id}_#{maxSide}.jpg"
-									console.log 'id3CoverPath', id3CoverPath
-									fs.exists id3CoverPath, (exists)->
-										if exists
-											console.log 'exists'
-											fs.readFile id3CoverPath, cb
-										else
-											console.log 'no-exists'
-											image = new Image()
-											image.addEventListener 'load', (e)->
-												canvas = document.createElement 'canvas'
-												ctx = canvas.getContext '2d'
-												width = image.width
-												height = image.height
-												if height < maxSide and width < maxSide
-													if imagePath[...4] is 'http'
-														f = fs.createWriteStream coverPath
-														f.on 'finish', ->
-															fs.readFile coverPath, cb
-														f.on 'error', cb
-														request(info.cover.url,
-															jar: false
-															headers: {}
-															proxy: common.getProxyString()
-														).pipe f
-													else
-														fs.readFile imagePath, cb
-													return
-												if height > width
-													canvas.height = maxSide
-													canvas.width = maxSide / height * width
-												else
-													canvas.width = maxSide
-													canvas.height = maxSide / width * height
-												ctx.drawImage image,
-													0, 0,
-													image.width, image.height,
-													0, 0,
-													canvas.width, canvas.height
-												data = canvas.toDataURL('image/jpeg').replace 'data:image/jpeg;base64,', ''
-												fs.writeFile id3CoverPath, data, encoding: 'base64', (err)->
-													cb err, new Buffer(data, 'base64')
-											image.src = if imagePath[...4] is 'http' then imagePath else "file:///#{imagePath}"
-									###
-
-								console.log 'coverDownload'
-								if Config.hasCover or (Config.hasId3 and Config.id3.hasCover)
-									console.log 'coverDownload is true'
-									fs.exists coverPath, (exists)->
-										if exists
-											if Config.hasId3 and Config.id3.hasCover
-												if Config.id3.cover.size is 'original'
-													fs.readFile coverPath, cb
-												else
-													resizeImage info.cover.url
-													#resizeImage coverPath
-											else
-												cb null
-										else
-											if Config.hasCover
-												f = fs.createWriteStream coverPath
-												f.on 'finish', ->
-													if Config.hasId3 and Config.id3.hasCover
-														if Config.id3.cover.size is 'original'
-															fs.readFile coverPath, cb
-														else
-															resizeImage info.cover.url
-															#resizeImage coverPath
-													else
-														cb null
-												f.on 'error', (err)->
-													cb err
-												request(info.cover.url,
-													jar: false
-													headers: {}
-													proxy: common.getProxyString()
-												).pipe f
-											else
-												resizeImage info.cover.url
-								else
-									cb null
-							lyricDownload: (cb)->
-								console.log 'lyricDownload'
-								if (Config.hasLyric or (Config.hasId3 and Config.id3.hasLyric)) and info.lyric.url
-									console.log 'lyricDownload is true'
-									if Config.hasLyric
-										f = fs.createWriteStream "#{savePath}.lrc"
+							console.log 'coverDownload'
+							if Config.hasCover
+								console.log 'coverDownload is true'
+								fs.exists coverPath, (exists)->
+									if exists
+										cb null
+									else
+										f = fs.createWriteStream coverPath
 										f.on 'finish', ->
-											if Config.hasId3 and Config.id3.hasLyric
-												fs.readFile "#{savePath}.lrc", (err, data)->
-													cb err, data.toString()
-											else
-												cb null
+											cb null
 										f.on 'error', (err)->
 											cb err
-										request(info.lyric.url, 
+										req = request info.cover.url,
 											jar: false
 											headers: {}
 											proxy: common.getProxyString()
-										).pipe f
-									else
-										request info.lyric.url,
-											jar: false
-											headers: {}
-											proxy: common.getProxyString()
-											, (error, response, body)->
-												cb error, body
-								else
-									console.log 'noLyric'
-									cb null
-							writeId3Info: common.getValidArray(['coverDownload' if Config.id3.hasCover, 'lyricDownload' if Config.id3.hasLyric, (cb, result)->
-								console.log result
-								console.log 'writeId3Info'
-								if Config.hasId3
-									console.log 'writeId3Info is true'
-									id3Writer = new id3v23("#{savePath}.download")
-									# TALB 专辑名
-									if Config.id3.hasAlbum and info.album.name
-										id3Writer.setTag 'TALB', info.album.name
-
-									# TPE1 艺术家/主唱
-									if Config.id3.hasArtist and info.artist.name
-										id3Writer.setTag 'TPE1', info.artist.name
-
-									# TPE2 专辑艺术家/乐队
-									if Config.id3.hasAlbumArtist and info.album.artist
-										id3Writer.setTag 'TPE2', info.album.artist
-
-									# TIT2 歌名
-									if Config.id3.hasTitle and info.song.name
-										id3Writer.setTag 'TIT2', info.song.name
-
-									# TRCK 音轨号
-									if Config.id3.hasTrack and info.track.id
-									    id3Writer.setTag 'TRCK', info.track.id
-
-									# TYER 灌录年份
-									if Config.id3.hasYear and info.year
-									    id3Writer.setTag 'TYER', info.year
-
-									# APIC 专辑封面
-									if Config.id3.hasCover and image = result.coverDownload
-										id3Writer.setTag 'APIC', image
-
-									# TCON 音乐类型(流派)
-									if Config.id3.hasGenre and info.source.style
-										g = genre info.source.style.split(',')
-										if g
-											id3Writer.setTag 'TCON', g
-
-									# TPOS 碟片号
-									if Config.id3.hasDisc and info.track.disc
-										id3Writer.setTag 'TPOS', info.track.disc
-
-									# USLT 歌词
-									if Config.id3.hasLyric and info.lyric.url
-										if lyric = result.lyricDownload
-											id3Writer.setTag 'USLT', lyric
-											#id3Writer.write cb
-										###
-										else
-											fs.exists "#{savePath}.lrc", (exists)->
-												if exists
-													fs.readFile "#{savePath}.lrc", (err, lyric)->
-														if not err
-															id3Writer.setTag 'USLT', lyric.toString()
-														id3Writer.write ->
-															cb err
-												else
-													id3Writer.write cb
-									else
-										id3Writer.write cb
-										###
-
-									id3Writer.write cb
-								else
-									cb null
-							])
-							fileDownload: common.getValidArray(['writeId3Info' if Config.hasId3, fileDownload = (cb)->
-								console.log 'fileDownload'
-								req = http.get (->
-										if Config.useProxy is 'true'
-											common.mixin url.parse(location),
-												agent: tunnel.httpsOverHttp
-													proxy:
-														host: Config.proxy.host
-														port: Config.proxy.port
-														proxyAuth: "#{Config.proxy.username}:#{Config.proxy.password}"
-										else
-											location
-									)(), (res)->
-										switch res.statusCode
-											when 200
-												f = fs.createWriteStream "#{savePath}.download",
-													flags: 'a'
-													encoding: null
-													mode: 0o666
-
-												f.on 'finish', ->
-													fs.rename "#{savePath}.download", "#{savePath}.mp3", ->
-														cb null
-
-												f.on 'error', (err)->
-													console.log err
-													cb err
-												res.pipe f
-											when 302
-												res.resume()
-												location = res.headers.location
-												fileDownload cb
+										req.pipe f
+							else
+								cb null
+							###
+							if Config.hasCover or (Config.hasId3 and Config.id3.hasCover)
+								console.log 'coverDownload is true'
+								fs.exists coverPath, (exists)->
+									if exists
+										# TODO: Download Break To Do
+										if Config.hasId3 and Config.id3.hasCover
+											if Config.id3.cover.size is 'original'
+												fs.readFile coverPath, cb
 											else
-												cb '无法下载'
+												resizeImage info.cover.url
+												#resizeImage coverPath
+										else
+											cb null
+									else
+										if Config.hasCover
+											f = fs.createWriteStream coverPath
+											f.on 'finish', ->
+												if Config.hasId3 and Config.id3.hasCover
+													if Config.id3.cover.size is 'original'
+														fs.readFile coverPath, cb
+													else
+														resizeImage info.cover.url
+														#resizeImage coverPath
+												else
+													cb null
+											f.on 'error', (err)->
+												cb err
+											request(info.cover.url,
+												jar: false
+												headers: {}
+												proxy: common.getProxyString()
+											).pipe f
+										else
+											resizeImage info.cover.url
+							else
+								cb null
+							###
 
-								req.on 'error',(err)->
-									cb err
-							])
-							, (err, result)->
-								console.log err, result
-								cb err
+						resizeImage = (cb)->
+							if Config.hasId3 and  Config.id3.hasCover
+								imagePath = info.cover.url
+								console.log 'resizeImage', imagePath
+								maxSide = if Config.id3.size is 'standard' then 640 else Config.id3.cover.maxSide
 
+								image = new Image()
+
+								image.addEventListener 'load', (e)->
+									console.log 'load'
+									canvas = document.createElement 'canvas'
+									ctx = canvas.getContext '2d'
+									width = image.width
+									height = image.height
+									if height < maxSide and width < maxSide
+										###
+										if imagePath[...4] is 'http'
+											f = fs.createWriteStream coverPath
+											f.on 'finish', ->
+												fs.readFile coverPath, cb
+											f.on 'error', cb
+											request(info.cover.url,
+												jar: false
+												headers: {}
+												proxy: common.getProxyString()
+											).pipe f
+										else
+											fs.readFile imagePath, cb
+										###
+										canvas.height = image.height
+										canvas.width = image.width
+									else if height > width
+										canvas.height = maxSide
+										canvas.width = maxSide / height * width
+									else
+										canvas.width = maxSide
+										canvas.height = maxSide / width * height
+									ctx.drawImage image,
+										0, 0,
+										image.width, image.height,
+										0, 0,
+										canvas.width, canvas.height
+									data = canvas.toDataURL('image/jpeg').replace 'data:image/jpeg;base64,', ''
+									cb err, new Buffer(data, 'base64')
+
+								image.src = if imagePath[...4] is 'http' then imagePath else "file:///#{imagePath}"
+							else
+								cb null
+						###
+						id3CoverPath = path.resolve pathFolder, "#{info.album.id}_#{maxSide}.jpg"
+						console.log 'id3CoverPath', id3CoverPath
+						fs.exists id3CoverPath, (exists)->
+							if exists
+								console.log 'exists'
+								fs.readFile id3CoverPath, cb
+							else
+								console.log 'no-exists'
+								image = new Image()
+								image.addEventListener 'load', (e)->
+									canvas = document.createElement 'canvas'
+									ctx = canvas.getContext '2d'
+									width = image.width
+									height = image.height
+									if height < maxSide and width < maxSide
+										if imagePath[...4] is 'http'
+											f = fs.createWriteStream coverPath
+											f.on 'finish', ->
+												fs.readFile coverPath, cb
+											f.on 'error', cb
+											request(info.cover.url,
+												jar: false
+												headers: {}
+												proxy: common.getProxyString()
+											).pipe f
+										else
+											fs.readFile imagePath, cb
+										return
+									if height > width
+										canvas.height = maxSide
+										canvas.width = maxSide / height * width
+									else
+										canvas.width = maxSide
+										canvas.height = maxSide / width * height
+									ctx.drawImage image,
+										0, 0,
+										image.width, image.height,
+										0, 0,
+										canvas.width, canvas.height
+									data = canvas.toDataURL('image/jpeg').replace 'data:image/jpeg;base64,', ''
+									fs.writeFile id3CoverPath, data, encoding: 'base64', (err)->
+										cb err, new Buffer(data, 'base64')
+								image.src = if imagePath[...4] is 'http' then imagePath else "file:///#{imagePath}"
+						###
+						
+						lyricDownload = (cb)->
+							console.log 'lyricDownload'
+							if (Config.hasLyric or (Config.hasId3 and Config.id3.hasLyric)) and info.lyric.url
+								console.log 'lyricDownload is true'
+								if Config.hasLyric
+									f = fs.createWriteStream "#{savePath}.lrc"
+									f.on 'finish', ->
+										if Config.hasId3 and Config.id3.hasLyric
+											fs.readFile "#{savePath}.lrc", (err, data)->
+												cb err, data.toString()
+										else
+											cb null
+									f.on 'error', (err)->
+										cb err
+									request(info.lyric.url, 
+										jar: false
+										headers: {}
+										proxy: common.getProxyString()
+									).pipe f
+								else
+									request info.lyric.url,
+										jar: false
+										headers: {}
+										proxy: common.getProxyString()
+										, (error, response, body)->
+											cb error, body
+							else
+								console.log 'noLyric'
+								cb null
+								
+						writeId3Info = (cb, result)->
+							console.log result
+							console.log 'writeId3Info'
+							if Config.hasId3
+								console.log 'writeId3Info is true'
+								id3Writer = new id3v23("#{savePath}.download")
+								# TALB 专辑名
+								if Config.id3.hasAlbum and info.album.name
+									id3Writer.setTag 'TALB', info.album.name
+
+								# TPE1 艺术家/主唱
+								if Config.id3.hasArtist and info.artist.name
+									id3Writer.setTag 'TPE1', info.artist.name
+
+								# TPE2 专辑艺术家/乐队
+								if Config.id3.hasAlbumArtist and info.album.artist
+									id3Writer.setTag 'TPE2', info.album.artist
+
+								# TIT2 歌名
+								if Config.id3.hasTitle and info.song.name
+									id3Writer.setTag 'TIT2', info.song.name
+
+								# TRCK 音轨号
+								if Config.id3.hasTrack and info.track.id
+									id3Writer.setTag 'TRCK', info.track.id
+
+								# TYER 灌录年份
+								if Config.id3.hasYear and info.year
+									id3Writer.setTag 'TYER', info.year
+
+								# APIC 专辑封面
+								if Config.id3.hasCover and image = result.resizeImage
+									id3Writer.setTag 'APIC', image
+
+								# TCON 音乐类型(流派)
+								if Config.id3.hasGenre and info.source.style
+									g = genre info.source.style.split(',')
+									if g
+										id3Writer.setTag 'TCON', g
+
+								# TPOS 碟片号
+								if Config.id3.hasDisc and info.track.disc
+									id3Writer.setTag 'TPOS', info.track.disc
+
+								# USLT 歌词
+								if Config.id3.hasLyric and info.lyric.url
+									if lyric = result.lyricDownload
+										id3Writer.setTag 'USLT', lyric
+										#id3Writer.write cb
+									###
+									else
+										fs.exists "#{savePath}.lrc", (exists)->
+											if exists
+												fs.readFile "#{savePath}.lrc", (err, lyric)->
+													if not err
+														id3Writer.setTag 'USLT', lyric.toString()
+													id3Writer.write ->
+														cb err
+											else
+												id3Writer.write cb
+								else
+									id3Writer.write cb
+									###
+
+								id3Writer.write cb
+							else
+								cb null
+
+						fileDownload = (cb)->
+							console.log 'fileDownload'
+							fs.exists "#{savePath}.mp3", (exists)->
+								if exists
+									cb '已下载过'
+								else
+									req = http.get (->
+											if Config.useProxy is 'true'
+												common.mixin url.parse(location),
+													agent: tunnel.httpsOverHttp
+														proxy:
+															host: Config.proxy.host
+															port: Config.proxy.port
+															proxyAuth: "#{Config.proxy.username}:#{Config.proxy.password}"
+											else
+												location
+										)(), (res)->
+											switch res.statusCode
+												when 200
+													f = fs.createWriteStream "#{savePath}.download",
+														flags: 'a'
+														encoding: null
+														mode: 0o666
+
+													f.on 'finish', ->
+														fs.rename "#{savePath}.download", "#{savePath}.mp3", ->
+															$scope.$apply ->
+																cb null
+
+													f.on 'error', (err)->
+														console.log err
+														cb err
+
+													check = ((timeout)->
+														contentLength = Number res.headers['content-length']
+														count = 0
+														lastBytes = 0
+
+														->
+															nowBytes = f.bytesWritten
+															$scope.$apply ->
+																info.process = nowBytes / contentLength * 100
+															if info.process >= 100
+																f.end()
+															else
+																if lastBytes is nowBytes
+																	count++
+																else
+																	count = 0
+
+																if count > 60
+																	f.end()
+																else
+																	timers.setTimeout(check, timeout)
+													)(1000)
+
+													check()
+
+													res.pipe f
+												when 302
+													res.resume()
+													location = res.headers.location
+													fileDownload cb
+												else
+													console.log res.statusCode
+													cb '无法下载'
+
+									req.on 'error',(err)->
+										cb err
+										
+						async.auto
+							'coverDownload': coverDownload
+							'resizeImage': resizeImage
+							'lyricDownload': lyricDownload
+							'writeId3Info': common.getValidArray ['resizeImage' if Config.id3.hasCover, 'lyricDownload' if Config.id3.hasLyric, writeId3Info]
+							'fileDownload': common.getValidArray ['writeId3Info' if Config.hasId3, fileDownload]
+						, (err, result)->
+							console.log err, result
+							cb err
 					else
 						cb err
 
 	getInfo = (item, cb)->
 		async.parallel [
-				(cb)->
-					# "http://www.xiami.com/app/xiating/album?id=#{item.id}" HTML
-					if item.type is 'album'
-						uri = "http://www.xiami.com/app/android/album?id=#{item.id}" # android api only for track
-					else
-						uri = "http://www.xiami.com/song/playlist/id/#{item.id}/type/#{type[item.type]}/cat/json"
-					request
-						url: uri
-						json: true
-						proxy: common.getProxyString()
-						, (error, response, body)->
-							if not error and response.statusCode is 200
-								result = 
-									type: item.type
-									id: item.id
-									list: (->
-											result = []
-											console.log body
-											for song in body.data?.trackList ? body.album?.songs # web: trackList  android: songs
+			(cb)->
+				# "http://www.xiami.com/app/xiating/album?id=#{item.id}" HTML
+				if item.type is 'album'
+					uri = "http://www.xiami.com/app/android/album?id=#{item.id}" # android api only for track
+				else
+					uri = "http://www.xiami.com/song/playlist/id/#{item.id}/type/#{type[item.type]}/cat/json"
+				request
+					url: uri
+					json: true
+					proxy: common.getProxyString()
+					, (error, response, body)->
+						if not error and response.statusCode is 200
+							result = 
+								type: item.type
+								id: item.id
+								list: (->
+										result = []
+										console.log body
+										for song in body.data?.trackList ? body.album?.songs # web: trackList	android: songs
+											songId = song.song_id
+											songName = ent.decode song.name ? song.title # web: title	android: name
+											albumId = song.albumId ? song.album_id
+											albumName = ent.decode song.album_name ? song.title # web: album_name	android: album.title
+											albumArtist = song.artist_name # android only
+											artistName = ent.decode song.artist ? song.singers # web: artist	android: singers
+											artistId = song.artist_id
+											lyricUrl = song.lyric if song.lyric?.indexOf('.lrc') isnt -1
+											pictureUrl = (song.pic ? song.album_logo).replace /_\d.jpg/, '.jpg'# 从小图Url获得大图Url web: pic	android: album_logo
+											trackId = song.track # android only
+											discNum = song.cd_serial # android only
+											cdCount = song.cd_count # android only
+											result.push
+													'song':
+														'name': songName
+														'id': songId
+													'album':
+														'name': albumName
+														'id': albumId
+														'artist': albumArtist
+													'artist':
+														'name': artistName
+														'id': artistId
+													'lyric':
+														'url': lyricUrl
+													'cover':
+														'url':pictureUrl
+													'track':
+														'disc': discNum
+														'id': trackId
+														'cd': cdCount
+										result
+									)()
+							if item.type isnt 'album' and Config.filenameFormat.indexOf('%TRACK%') isnt -1
+								async.map result.list,
+									(item, cb)->
+										handle = (list)->
+											for song in list
 												songId = song.song_id
-												songName = ent.decode song.name ? song.title # web: title  android: name
-												albumId = song.albumId ? song.album_id
-												albumName = ent.decode song.album_name ? song.title # web: album_name  android: album.title
-												albumArtist = song.artist_name # android only
-												artistName = ent.decode song.artist ? song.singers # web: artist  android: singers
-												artistId = song.artist_id
-												lyricUrl = song.lyric if song.lyric?.indexOf('.lrc') isnt -1
-												pictureUrl = (song.pic ? song.album_logo).replace /_\d/, ''# 从小图Url获得大图Url web: pic  android: album_logo
-												trackId = song.track # android only
-												discNum = song.cd_serial # android only
-												cdCount = song.cd_count # android only
-												result.push
-														'song':
-															'name': songName
-															'id': songId
-														'album':
-															'name': albumName
-															'id': albumId
-															'artist': albumArtist
-														'artist':
-															'name': artistName
-															'id': artistId
-														'lyric':
-															'url': lyricUrl
-														'cover':
-															'url':pictureUrl
-														'track':
-															'disc': discNum
-															'id': trackId
-															'cd': cdCount
-											result
-										)()
-								if item.type isnt 'album' and Config.filenameFormat.indexOf('%TRACK%') isnt -1
-									async.map result.list,
-										(item, cb)->
-											handle = (list)->
-												for song in list
-													songId = song.song_id
-													trackId = song.track
-													discNum = song.cd_serial
+												trackId = song.track
+												discNum = song.cd_serial
 
-													if songId is item.song.id
-														item.track.disc = discNum
-														item.track.id = trackId
-														break
-											if "album#{item.album.id}" in cache
-												handle cache["album#{item.album.id}"]
-												cb error, item
-											else
-												uri = "http://www.xiami.com/app/android/album?id=#{item.album.id}"
-												request
-													url: uri,
-													json: true
-													proxy: common.getProxyString()
-													,(error, response, body)->
-														if not error and response.statusCode is 200
-															if body.album
-																cache["album#{item.album.id}"] = body.album.songs
-															else
-																error = '遭到屏蔽, 暂时无法使用'
-															handle cache["album#{item.album.id}"]
-														cb error, item
-										, (err, ret)->
-											cb err, result
-								else
-									cb null, result
+												if songId is item.song.id
+													item.track.disc = discNum
+													item.track.id = trackId
+													break
+										if "album#{item.album.id}" in cache
+											handle cache["album#{item.album.id}"]
+											cb error, item
+										else
+											uri = "http://www.xiami.com/app/android/album?id=#{item.album.id}"
+											request
+												url: uri,
+												json: true
+												proxy: common.getProxyString()
+												,(error, response, body)->
+													if not error and response.statusCode is 200
+														if body.album
+															cache["album#{item.album.id}"] = body.album.songs
+														else
+															error = '遭到屏蔽, 暂时无法使用'
+														handle cache["album#{item.album.id}"]
+													cb error, item
+									, (err, ret)->
+										cb err, result
 							else
-								cb error, {}
-				(cb)->
-					switch item.type
-						when 'album'
-							request "http://www.xiami.com/album/#{item.id}", proxy: common.getProxyString(), (error, response, body) ->
-								if not error and response.statusCode is 200
-									$ = cheerio.load body, ignoreWhitespace:true
-									name = common.replaceLast $('#title h1').text(), $('#title h1').children().text(), ''
-									#pictureUrl = $('#album_cover a img').attr('src')?.replace(/_\d/, '')# 从小图Url获得大图Url
-									info = $('#album_info table tr').toArray()# 专辑信息
-									artistInfo = $(info[0]).children().last().text()# 艺人
-									languageInfo = $(info[1]).children().last().text()# 语种
-									companyInfo = $(info[2]).children().last().text()# 唱片公司
-									timeInfo = $(info[3]).children().last().text()# 发行时间
-									typeInfo = $(info[4]).children().last().text()# 专辑类别
-									styleInfo = $(info[5]).children().last().text()# 专辑风格
-									cb null,
-										name:name
-										artist:artistInfo
-										language:languageInfo
-										company:companyInfo
-										time:timeInfo
-										style:styleInfo
-										year:timeInfo.substring(0,4)
-										#picture:list[0].picture
-						when 'showcollect'
-							request "http://www.xiami.com/song/showcollect/id/#{item.id}", proxy: common.getProxyString(), (error, response, body)->
-								if not error and response.statusCode is 200
-									$ = cheerio.load body, ignoreWhitespace:true
-									name = $('#xiami-content h1').text()
-									#pictureUrl = $('#cover_logo a img').attr('src')?.replace(/_\d/, '')# 从小图Url获得大图Url
-									cb null,
-										name:name
-										#pictureUrl:pictureUrl
-						when 'artist'
-							request "http://www.xiami.com/artist/#{item.id}", proxy: common.getProxyString(), (error, response, body)->
-								if not error and response.statusCode is 200
-									$ = cheerio.load body, ignoreWhitespace:true
-									name = common.replaceLast $('#title h1').text(), $('#title h1').children().text(), ''
-									cb null,
-										name:name
+								cb null, result
 						else
-							cb null, {}
-			], (err, result)->
-				if not err
-					result = _.extend.apply this, result
-					for song, id in result.list
-						song.trackId = id + 1 if result.type is 'album'
-						song.year = result.year if result.year
-					console.log result
-					result.name = result.list[0].song.name if result.type is 'song'
-				cb err, result
+							cb error, {}
+			(cb)->
+				switch item.type
+					when 'album'
+						request "http://www.xiami.com/album/#{item.id}", proxy: common.getProxyString(), (error, response, body) ->
+							if not error and response.statusCode is 200
+								$ = cheerio.load body, ignoreWhitespace:true
+								name = common.replaceLast $('#title h1').text(), $('#title h1').children().text(), ''
+								pictureUrl = $('#album_cover a img').attr('src')?.replace(/_\d\.jpg/, '.jpg')# 从小图Url获得大图Url
+								infoEle = $('#album_info table tr').toArray()# 专辑信息
+								info = {}
+								for i in infoEle
+									children = $(i).children()
+									key = $(children[0]).text()[...-1]
+									value = $(children[1]).text()
+									info[key] = value
+								cb null,
+									'name': name
+									'artist': info['艺人']
+									'language': info['语种']
+									'company': info['唱片公司']
+									'time': info['发行时间']
+									'style': info['专辑风格']
+									'year': info['发行时间'][...4]
+									'cover':
+										'url': pictureUrl
+								#console.log info
+								###
+								artistInfo = $(info[0]).children().last().text()# 艺人
+								languageInfo = $(info[1]).children().last().text()# 语种
+								companyInfo = $(info[2]).children().last().text()# 唱片公司
+								timeInfo = $(info[3]).children().last().text()# 发行时间
+								typeInfo = $(info[4]).children().last().text()# 专辑类别
+								styleInfo = $(info[5]).children().last().text()# 专辑风格
+								###
+								###
+								cb null,
+									'name': name
+									'artist': artistInfo
+									'language': languageInfo
+									'company': companyInfo
+									'time': timeInfo
+									'style': styleInfo
+									'year': timeInfo.substring(0,4)
+									'cover': 
+										'url': pictureUrl
+								###
+					when 'showcollect'
+						request "http://www.xiami.com/song/showcollect/id/#{item.id}", proxy: common.getProxyString(), (error, response, body)->
+							if not error and response.statusCode is 200
+								$ = cheerio.load body, ignoreWhitespace:true
+								name = $('#xiami-content h1').text()
+								pictureUrl = $('#cover_logo a img').attr('src')?.replace(/_\d\.jpg/, '.jpg')# 从小图Url获得大图Url
+								cb null,
+									'name': name
+									'cover': 
+										'url': pictureUrl
+					when 'artist'
+						request "http://www.xiami.com/artist/#{item.id}", proxy: common.getProxyString(), (error, response, body)->
+							if not error and response.statusCode is 200
+								$ = cheerio.load body, ignoreWhitespace:true
+								name = common.replaceLast $('#title h1').text(), $('#title h1').children().text(), ''
+								pictureUrl = $('#artist_photo a img').attr('src')?.replace(/_\d\.jpg/, '.jpg')# 从小图Url获得大图Url
+								cb null,
+									'name': name
+									'cover':
+										'url': pictureUrl
+					else
+						cb null, {}
+		], (err, result)->
+			console.log result
+			if not err
+				result = _.extend.apply this, result
+				for song, id in result.list
+					#song.trackId = id + 1 if result.type is 'album'
+					song.year = result.year if result.year
+				if result.type is 'song'
+					result.name = result.list[0].song.name
+					result.cover = result.list[0].cover
+			cb err, result
 	# getInfo End
 
 	$scope.checkAll = (i)->
@@ -527,18 +632,18 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 
 	$scope.createTask = ->
 		data = angular.copy $scope.data
-		result = []
+		#result = []
 		for task, i in data
 			if task.checked and task.checked.length > 0
 				task.list = task.checked
-				#delete data[i].checked
+				delete task.checked
 				for track in task.list
 					track.source = task
 					track.run = requestFile
-					result.push track
+					#result.push track
 		dialog('.dialog .create').hide()
 		$scope.step = 1
-		TaskQueue.push.apply null, result
+		TaskQueue.push.apply null, data #result
 
 	$scope.check = (i1, i2)->
 		task = $scope.data[i1]
@@ -575,12 +680,14 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 				JSON.stringify item # 低效率, 要求严格的对象格式
 		)()
 		if targets.length > 0
-			async.map targets, getInfo ,(err, result)->
+			async.map targets, getInfo, (err, result)->
 				if not err
 					$scope.$apply ->
 						$scope.step = 2
 						$scope.links = ''
 						$scope.data = result
+						console.log result
+												# if data.list[0].source.type is 'album' and info.track.cd is '2'
 				else
 					console.log err, result, targets
 		else
@@ -599,7 +706,7 @@ App.controller 'AboutCtrl',($scope)->
 App.controller 'UpdateCtrl',($scope)->
 	$scope.version = pkg.version
 
-App.controller 'SetupCtrl',($scope)->
+App.controller 'SetupCtrl',($scope, User)->
 	$scope.toggle = (element)->
 		content = document.querySelectorAll('.dialog .setup ul.content>*')
 		for i in content
@@ -620,7 +727,7 @@ App.controller 'ConfigCtrl', ($scope, Config)->
 		fileDialog = $ "<input type='file' nwdirectory='' nwworkingdir='#{$scope.config.localSavePath}'/>"
 		fileDialog.change (e)->
 			$scope.$apply ->
-				$scope.config.localSavePath = fileDialog.val()
+				$scope.config.savePath = fileDialog.val()
 		fileDialog.click()
 		return
 
@@ -630,55 +737,58 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
 			$scope.email = data.email
 			$scope.password = data.password
 			$scope.remember = data.remember
-	$scope.logged = false
 	$scope.user = User
+	$scope.user.logged = false
+	
 	formData = []
 
-	getForm = ->
+	###
+	$scope.init = ->
 		async.waterfall [
-				(cb)->
-					request 'https://login.xiami.com/member/login' ? 'http://www.xiami.com/member/login', proxy: common.getProxyString(), cb
-				(response, body, cb) ->
-					if response.statusCode is 200
-						$ = cheerio.load(body, ignoreWhitespace:true)
-						$scope.$apply ->
-							$scope.taobaoLoginPage = $sce.trustAsResourceUrl url.resolve response.request.href, $('iframe').attr('src') # taobao login
-						fields= $('form input').toArray()
-						data = {}
-						for field in fields
-							name = $(field).attr('name') ? ''
-							value = $(field).attr('value') ? ''
-							data[name] = value
-						if data.validate?
-							img = fs.createWriteStream 'validate.png'
-							img.on 'finish',->
-								cb null, data
-							request("https://login.xiami.com/coop/checkcode?forlogin=1&t=#{Math.random()}", proxy: common.getProxyString()).pipe img
-						else
-							cb null, data
-					else
-						cb null, {}
-				(data, cb)->
+			(cb)->
+				request 'https://login.xiami.com/member/login' ? 'http://www.xiami.com/member/login', proxy: common.getProxyString(), cb
+			(response, body, cb) ->
+				if response.statusCode is 200
+					$ = cheerio.load(body, ignoreWhitespace:true)
+					$scope.$apply ->
+						$scope.taobaoLoginPage = $sce.trustAsResourceUrl url.resolve response.request.href, $('iframe').attr('src') # taobao login
+						console.log url.resolve response.request.href, $('iframe').attr('src')
+					fields= $('form input').toArray()
+					data = {}
+					for field in fields
+						name = $(field).attr('name') ? ''
+						value = $(field).attr('value') ? ''
+						data[name] = value
 					if data.validate?
-						$scope.$apply ->
-							$scope.validateUrl = "validate.png?#{Math.random()}"
-					formData = data
-					cb null, data
-			], (err, result)->
-				if err
-					console.log err, result
-	getForm()
+						img = fs.createWriteStream 'validate.png'
+						img.on 'finish',->
+							cb null, data
+						request("https://login.xiami.com/coop/checkcode?forlogin=1&t=#{Math.random()}", proxy: common.getProxyString()).pipe img
+					else
+						cb null, data
+				else
+					cb null, {}
+			(data, cb)->
+				if data.validate?
+					$scope.$apply ->
+						$scope.validateUrl = "validate.png?#{Math.random()}"
+				formData = data
+				cb null, data
+		], (err, result)->
+			if err
+				console.log err, result
+	###
 
 	$scope.logout = ->
 		Config.cookie = ''
 		for i in Object.keys User
 			delete User[i]
-		$scope.logged = false
-		getForm()
+		User.logged = false
+		common.loadLoginPage()
 
 	$scope.sign = ->
 		request.post 'http://www.xiami.com/task/signin',
-			headers: common.mixin Config.headers, 
+			headers: common.mixin Config.headers,
 				Cookie: Config.cookie
 				Referer: 'http://www.xiami.com/'
 			proxy: common.getProxyString()
@@ -690,14 +800,15 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
 				else
 					console.log error
 
-	$scope.taobaoPageLoad = ->
-		iframe = document.querySelector 'iframe'
+	$scope.loginPageLoad = ->
+		iframe = document.querySelector 'iframe.loginPage'
 		iframeUrl = url.parse iframe.contentDocument.URL
 		#console.log iframeUrl, iframe.contentDocument.cookie
 		if iframeUrl.href is 'http://www.xiami.com/'
 			require('nw.gui').Window.get().cookies.getAll
 					domain: '.xiami.com'
 				,(cookies)->
+					console.log cookies
 					Config.cookie = (->
 						ret = ''
 						for i in cookies
@@ -705,7 +816,7 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
 						ret
 					)()
 					$scope.$apply ->
-						$scope.logged = true
+						User.logged = true
 						# 重复 Begin
 						async.waterfall [
 								(cb)->
@@ -730,7 +841,7 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
 										User.sign =
 											hasCheck: not not result.data.userInfo.is # 是否已签到
 											num: result.data.userInfo.sign.persist_num # 签到天数
-										User.level = 
+										User.level =
 											name: result.data.userInfo.level
 											num: result.data.userInfo.numlevel
 											credit: result.data.userInfo.credits # 当前等级分数
@@ -787,7 +898,7 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
 						else
 							Config.cookie = result
 							$scope.$apply ->
-								$scope.logged = true
+								User.logged = true
 								cb()
 			(cb)->
 				async.waterfall [
@@ -813,7 +924,7 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
 								User.sign =
 									hasCheck: not not result.data.userInfo.is # 是否已签到
 									num: result.data.userInfo.sign.persist_num # 签到天数
-								User.level = 
+								User.level =
 									name: result.data.userInfo.level
 									num: result.data.userInfo.numlevel
 									credit: result.data.userInfo.credits # 当前等级分数
@@ -832,4 +943,6 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
 					form:
 						user_id: User.id
 						tone_type: 1
+
+	# $scope.init()
 	# $scope.login End

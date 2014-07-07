@@ -4,14 +4,17 @@ html(lang='zh')
 		meta(charset='utf-8')
 		link(rel='stylesheet', href='../style/main.css')
 		script(src='../resource/library/underscore.js')
+		script(src='../resource/library/StackBlur.js')
 		script(src='../resource/library/jquery.js')
 		script(src='../resource/library/angular.js')
+		script(src='../resource/library/bindonce.js')
+		//script(src='../resource/library/once.js')
 		script(src='../resource/library/localforage.js')
 		script(src='../resource/library/angular-localForage.js')
 		script(src='../resource/library/checklist-model.js')
 		script(src='../resource/library/quick-ng-repeat.js')
 		script.
-			var App = angular.module('XiamiThief', ['LocalForageModule', 'checklist-model', 'QuickList']);
+			var App = angular.module('XiamiThief', ['pasvaz.bindonce', 'LocalForageModule', 'checklist-model', 'QuickList']);
 		script(src='../script/main.js')
 		script(src='../script/filter.js')
 		script(src='../script/directive.js')
@@ -19,35 +22,50 @@ html(lang='zh')
 		script(src='../script/dialog.js')
 		title XiamiThief v0.6
 	body(ng-app='XiamiThief')
+		canvas#bg
 		header
 			.information(ng-controller='InfoCtrl')
 				.avatar(ng-style="{'background-image': user.avatar ? 'url(' + user.avatar + ')' : url('../resource/image/usr100.gif')}")
 				.username {{ user.name || '未登录' }}
-			nav.control(ng-controller='ControlCtrl')
-				.button-menu(ng-click='menu($event)')
-				.button-minimize(ng-click='minimize()')
-				.button-maximize(ng-class="{'button-restore': isMaximize}", ng-click='zoom()')
-				.button-close(ng-click='close()')
-		.main
+		.main(ng-controller='TaskCtrl')
+			nav
+				.button-create(ng-click='showCreateDialog()')
+				.button-setup(ng-click='showSetupDialog()')
 			//aside
 				ul
 					li 正在下载
 					li 已完成
-			article(ng-controller='TaskCtrl')
-				nav
-				ul.task.run 正在下载
-					//task(ng-repeat='task in run')
+			//article
+			ul
+				li(quick-ng-repeat='task in list', quick-repeat-list='task')
+					.task(ng-click='task.expand = !task.expand')
+						img(ng-src='{{ task.cover.url | picSize: 1}}', image-size='task.expand ? 100 : 55')
+						div(process='task.process', state='task.state')
+							span.type {{ task.type | type2name }}
+							span.name {{ task.name }}
+					ul(ng-show='task.expand')
+						li.track(ng-repeat='track in task.list', process='track.process', state='track.state')
+							| {{ track.song.name }}
+				//ul.task
+					task(quick-ng-repeat='task in list', quick-repeat-list='task')
+			//article
+				ul.task.run 
+					//| 正在下载
+					//task(ng-repeat='task in run track by task.id')
 					task(quick-ng-repeat='task in run', quick-repeat-list='run')
-				ul.task.pre 准备下载
-					//task(ng-repeat='task in pre')
+				ul.task.pre
+					//| 准备下载
+					//task(ng-repeat='task in pre track by task.id')
 					task(quick-ng-repeat='task in pre', quick-repeat-list='pre')
-				ul.task.end 下载完成
-					//task(ng-repeat='task in end')
+				ul.task.end
+					//| 下载完成
+					//task(ng-repeat='task in end track by task.id')
 					task(quick-ng-repeat='task in end', quick-repeat-list='end')
-				ul.task.err 下载失败
-					//task(ng-repeat='task in err')
+				ul.task.err
+					//| 下载失败
+					//task(ng-repeat='task in err track by task.id')1
 					task(quick-ng-repeat='task in err', quick-repeat-list='err')
-		footer
+		//footer
 		.dialog
 			.create(ng-controller='CreateCtrl')
 				include create
@@ -67,3 +85,9 @@ html(lang='zh')
 				.flex-row
 					button.yes(ng-click='exit()') 是
 					button.no(ng-click='hide()') 否
+
+		nav.control(ng-controller='ControlCtrl')
+			.button-menu(ng-click='menu($event)')
+			.button-minimize(ng-click='minimize()')
+			.button-maximize(ng-class="{'button-restore': isMaximize}", ng-click='zoom()')
+			.button-close(ng-click='close()')
