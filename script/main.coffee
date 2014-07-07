@@ -37,6 +37,7 @@ common.loadLoginPage = ->
     iframe.src = 'https://login.xiami.com/member/login'
 		
 window.dialog = (element)->
+	window.tray?._events.click()
 	element = document.querySelectorAll element if _.isString element
 	if not (element.length or element.length is 0) #Not NodeList or Array
 		element = [element]
@@ -152,9 +153,9 @@ win.on 'minimize', ->
 		#win.restore()
 		win.setAlwaysOnTop true
 		win.setAlwaysOnTop false
-		@remove()
+		tray.remove()
 		window.tray = null
-	@hide()
+	tray.hide()
 
 ###
 win.on 'new-win-policy', (frame, url, policy)->

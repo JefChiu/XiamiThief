@@ -66,6 +66,10 @@
   };
 
   window.dialog = function(element) {
+    var _ref;
+    if ((_ref = window.tray) != null) {
+      _ref._events.click();
+    }
     if (_.isString(element)) {
       element = document.querySelectorAll(element);
     }
@@ -221,10 +225,10 @@
       win.show();
       win.setAlwaysOnTop(true);
       win.setAlwaysOnTop(false);
-      this.remove();
+      tray.remove();
       return window.tray = null;
     });
-    return this.hide();
+    return tray.hide();
   });
 
 
