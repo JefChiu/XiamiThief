@@ -30,9 +30,9 @@
         "xml2js": "~0.2.8"
     },
     "window":{
-        "show":true,
+        "show":false,
         "icon":"resource/image/logo64.png",
-        "toolbar":true,
+        "toolbar":false,
         "width":800,
         "min_width":800,
         "height":600,
