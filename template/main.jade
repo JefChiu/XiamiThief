@@ -37,7 +37,7 @@ html(lang='zh')
 					li 已完成
 			//article
 			ul
-				li(quick-ng-repeat='task in list', quick-repeat-list='tasks')
+				li(quick-ng-repeat='task in list', quick-repeat-list='task')
 					.task(ng-click='task.expand = !task.expand')
 						img(ng-src='{{ task.cover.url | picSize: 1}}', image-size='task.expand ? 100 : 55')
 						div(process='task.process', state='task.state')
@@ -46,7 +46,6 @@ html(lang='zh')
 					ul(ng-show='task.expand')
 						li.track(ng-repeat='track in task.list', process='track.process', state='track.state')
 							| {{ track.song.name }}
-							button(ng-if='track.state == State.Fail', ng-click='track.state = State.Ready; task.state = State.Ready; check()') 重试
 				//ul.task
 					task(quick-ng-repeat='task in list', quick-repeat-list='task')
 			//article

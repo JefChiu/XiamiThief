@@ -7,10 +7,6 @@ timers = require 'timers'
 async = require 'async'
 queue = require '../script/queue'
 common = require '../script/common'
-###
-if process.env.NODE_ENV isnt 'production'
-	require 'longjohn'
-###
 
 process.on('uncaughtException',(err)->
 	console.error err
@@ -159,7 +155,7 @@ win.on 'minimize', ->
 		win.setAlwaysOnTop false
 		tray.remove()
 		window.tray = null
-	win.hide()
+	tray.hide()
 
 ###
 win.on 'new-win-policy', (frame, url, policy)->
@@ -181,7 +177,7 @@ App.factory 'TaskQueue', ['$rootScope', 'Config', 'quickRepeatList', 'State', ($
 	queue = (concurrency = Config.taskLimitMax)->
 		running = 0
 		refresh = ->
-			_.defer quickRepeatList.tasks, q.list
+			_.defer quickRepeatList.task, q.list
 		q = 
 			list: []
 			push: (args...)->
@@ -194,7 +190,7 @@ App.factory 'TaskQueue', ['$rootScope', 'Config', 'quickRepeatList', 'State', ($
 				Array::push.apply q.list, args
 				q.dirtyCheck()
 			dirtyCheck: ->
-				# console.log 'list:', q.list
+				console.log 'list:', q.list
 				if running < concurrency
 					for c in q.list
 						switch c.state
@@ -207,9 +203,9 @@ App.factory 'TaskQueue', ['$rootScope', 'Config', 'quickRepeatList', 'State', ($
 											i.state = State.Running
 											i.run ((i)->
 												(err, data)->
-													# console.log 'info: ', i
-													# console.log 'err:', err
-													i.state = if err? then State.Fail else State.Success
+													console.log 'info: ', i
+													console.log 'err:', err
+													i.state = if err then State.Fail else State.Success
 													i.process = 100
 													running--
 													refresh()
@@ -234,7 +230,7 @@ App.factory 'TaskQueue', ['$rootScope', 'Config', 'quickRepeatList', 'State', ($
 	q
 ]
 
-App.controller 'TaskCtrl', ($scope, TaskQueue, State, quickRepeatList)->
+App.controller 'TaskCtrl',($scope, TaskQueue, quickRepeatList)->
 	$scope.showCreateDialog = ->
 		dialog('.dialog .create').show()
 	$scope.showSetupDialog = ->
@@ -242,8 +238,6 @@ App.controller 'TaskCtrl', ($scope, TaskQueue, State, quickRepeatList)->
 		common.loadLoginPage()
 		
 	$scope.list = TaskQueue.list
-	$scope.State = State
-	$scope.check = TaskQueue.dirtyCheck
 
 	###
 	$scope.pre = TaskQueue.pre
@@ -252,7 +246,7 @@ App.controller 'TaskCtrl', ($scope, TaskQueue, State, quickRepeatList)->
 	$scope.end = TaskQueue.end
 	###
 
-App.controller 'InfoCtrl', ($scope,User)->
+App.controller 'InfoCtrl',($scope,User)->
 	$scope.user = User
 
 #win.setMinimumSize 800,600
@@ -264,7 +258,7 @@ $ ->
 
 	$('.dialog').click dialogAllHide
 
-	document.body.addEventListener 'contextmenu', (ev)->
+	document.body.addEventListener 'contextmenu',(ev)->
 		ev.preventDefault()
 		# menu.popup(ev.x, ev.y)
 		false

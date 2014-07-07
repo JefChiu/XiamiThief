@@ -18,12 +18,6 @@
 
   common = require('../script/common');
 
-
-  /*
-  if process.env.NODE_ENV isnt 'production'
-  	require 'longjohn'
-   */
-
   process.on('uncaughtException', function(err) {
     console.error(err);
     return console.error(err.stack);
@@ -234,7 +228,7 @@
       tray.remove();
       return window.tray = null;
     });
-    return win.hide();
+    return tray.hide();
   });
 
 
@@ -266,7 +260,7 @@
         }
         running = 0;
         refresh = function() {
-          return _.defer(quickRepeatList.tasks, q.list);
+          return _.defer(quickRepeatList.task, q.list);
         };
         return q = {
           list: [],
@@ -289,6 +283,7 @@
           },
           dirtyCheck: function() {
             var c, count, i, total, _i, _j, _len, _len1, _ref, _ref1;
+            console.log('list:', q.list);
             if (running < concurrency) {
               _ref = q.list;
               for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -306,7 +301,9 @@
                           i.state = State.Running;
                           i.run((function(i) {
                             return function(err, data) {
-                              i.state = err != null ? State.Fail : State.Success;
+                              console.log('info: ', i);
+                              console.log('err:', err);
+                              i.state = err ? State.Fail : State.Success;
                               i.process = 100;
                               running--;
                               refresh();
@@ -347,7 +344,7 @@
     }
   ]);
 
-  App.controller('TaskCtrl', function($scope, TaskQueue, State, quickRepeatList) {
+  App.controller('TaskCtrl', function($scope, TaskQueue, quickRepeatList) {
     $scope.showCreateDialog = function() {
       return dialog('.dialog .create').show();
     };
@@ -355,9 +352,7 @@
       dialog('.dialog .setup').show();
       return common.loadLoginPage();
     };
-    $scope.list = TaskQueue.list;
-    $scope.State = State;
-    return $scope.check = TaskQueue.dirtyCheck;
+    return $scope.list = TaskQueue.list;
 
     /*
     	$scope.pre = TaskQueue.pre
