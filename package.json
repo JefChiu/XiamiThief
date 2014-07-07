@@ -1,8 +1,8 @@
 {
     "name":"xiami-thief",
-    "main":"ui.html",
+    "main":"template/main.html",
     "description":"Xiami HQ Music Downloader",
-    "version":"0.5.5",
+    "version":"0.6.1",
     "keywords":[
         "XiamiThief",
         "Music",
@@ -31,12 +31,14 @@
     },
     "window":{
         "show":true,
-        "icon":"logo64.png",
-        "toolbar":false,
+        "icon":"resource/image/logo64.png",
+        "toolbar":true,
         "width":800,
+        "min_width":800,
         "height":600,
-        "position":"mouse",
-        "resizable":false,
+        "min_height":600,
+        "position":"center",
+        "resizable":true,
         "frame":false,
         "transparent":true
     },

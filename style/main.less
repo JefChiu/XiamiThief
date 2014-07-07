@@ -1,0 +1,531 @@
+@red: #e74c3c;
+@blue: #3498db;
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+	.transparent-black(0.3);
+}
+
+*{
+	margin:0;
+	padding:0;
+	overflow:hidden;
+	-webkit-transition: all 0.1s linear;
+	//-webkit-appearance: none;
+	outline: none;
+}
+
+a{
+	color: @blue;
+	text-decoration: none;
+	&:hover{
+		cursor: pointer;
+		text-decoration: underline;
+	}
+}
+
+textarea{
+	resize:none;
+	.transparent-black(0.3);
+	border: 1px solid white;
+	color:white;
+}
+
+.no-drag{
+	-webkit-app-region: no-drag;
+}
+
+.drag{
+	-webkit-app-region: drag;
+}
+
+.align{
+	&.left{
+		text-align: left;
+	}
+	&.right{
+		text-align: right;
+	}
+	&.justify{
+		text-align: justify;
+	}
+	&.start{
+		text-align: start;
+	}
+	&.end{
+		text-align: end;
+	}
+}
+
+.flex(@flow:row){
+	display: -webkit-flex;
+	display: flex;
+	-webkit-flex-flow:@flow;
+	flex-flow:@flow;
+	>*{
+		-webkit-flex: 1;
+		flex:1;
+	}
+}
+
+.flex-column{
+	.flex(column);
+}
+
+.flex-row{
+	.flex(row);
+}
+
+.flex-center-vertical{
+	-webkit-justify-content:center;
+	justify-content:center;
+}
+
+.flex-center-horizontal{
+	-webkit-align-items:center;
+	align-items:center;
+}
+
+.flex-center{
+	.flex-center-horizontal;
+	.flex-center-vertical;
+}
+
+.no-flex{
+	-webkit-flex:none;
+	flex:none;
+}
+
+.z(@index:0){
+	z-index:@index;
+}
+
+.transparent-white(@alpha){
+	background-color:rgba(255,255,255,@alpha);
+}
+
+.transparent-black(@alpha){
+	background-color:rgba(0,0,0,@alpha);
+}
+
+#bg{
+	position: absolute;
+	top:0;
+	left:0;
+	height:100%;
+	width:100%;
+	z-index: -1;
+}
+
+body{
+	.flex(column);
+	position: absolute;
+	top:0;
+	left:0;
+	height:100%;
+	width:100%;
+	/*
+	background-image: url('../resource/image/kirito-sword-art-online-anime-hd-wallpaper-1920x1080-7732.jpg');
+    background-attachment: fixed;
+    background-size: auto 100%;
+    */
+	font-family: "Hiragino Sans GB", "WenQuanYi Micro Hei", "Microsoft YaHei", Helvetica, Arial, sans-serif;
+	font-size: 12px;
+	text-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
+	//-webkit-text-fill-color: white;
+	-webkit-text-stroke: 1px transparent;
+	-webkit-user-select:none;
+	cursor:default;
+}
+
+body>header{
+	.drag;
+	.no-flex;
+	.transparent-black(0.3);
+	height:80px;
+}
+
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='url'],
+input[type='number']{
+	.no-flex!important;
+	height:25px;
+	width:200px;
+	.transparent-black(0.3);
+	border: 1px solid white;
+	color:white;
+}
+
+input[type='checkbox'],
+input[type='radio']{
+	border: 1px solid white;
+	height: 15px;
+	width: 15px;
+}
+
+iframe{
+	background: initial;
+	border: none;
+  	height: 100%;
+  	width: 100%;
+}
+
+button{
+	.no-flex!important;
+	height:35px;
+	width:85px;
+	margin:5px;
+	.transparent-black(0.1);
+	border: 1px solid white;
+	color:white;
+}
+
+.information{
+	.flex(row);
+	margin:15px 2px 2px (15px-2px); //2px for .avatar's box-shadow
+
+	.avatar{
+		.no-flex;
+	    background-image: url('../resource/image/usr100.gif');//url('../resource/image/avatar.jpg');
+	    background-size: 100%;
+		width:50px;
+		height:50px;
+		border:2px solid white;
+		box-shadow:0 0 2px black;
+		margin-right:10px;
+		//2px for .avatar's box-shadow
+		margin-left:2px;
+		margin-top:2px;
+		margin-bottom:2px;
+	}
+
+	.username{
+		color: white;
+	}
+}
+
+nav.control{
+	.no-drag;
+	.flex;
+	position:absolute;
+	right:8px;
+	top:0;
+
+	>*{
+		width:32px;
+		height:23px;
+		text-shadow:0 0 1px rgba(0,0,0,0.1);
+		background-repeat: no-repeat;
+		background-position: center;
+		//-webkit-filter: invert(100%);
+
+		&:hover{
+			background-color:@blue;
+		}
+	}
+
+	.button-menu{
+		background-image: url('../resource/image/button_menu_white.png');
+	}
+
+	.button-minimize{
+	    background-image: url('../resource/image/button_minimize_white.png');
+	}
+
+	.button-maximize{
+	    background-image: url('../resource/image/button_maximize_white.png');
+	}
+
+	.button-restore{
+	    background-image: url('../resource/image/button_restore_white.png');
+	}
+
+	.button-close{
+	    background-image: url('../resource/image/button_close_white.png');
+	    &:hover{
+	    	background-color:@red;
+	    }
+	}
+}
+
+.text{
+	.flex(column);
+	.flex-center-vertical;
+	width: 480px;
+	font-size: 14px;
+	>*{
+		.no-flex;
+	}
+}
+
+/*
+ul.task{
+	&.end{
+		color: green;
+	}
+
+	&.pre{
+		color: black;
+	}
+
+	&.run{
+		color: blue;
+	}
+
+	&.err{
+		color: red;
+	}
+
+	>li{
+	}
+}
+*/
+
+.dialog{
+	.z(-1);
+	position:absolute;
+	top:0;
+	left:0;
+	height:100%;
+	width:100%;
+	.flex;
+	.flex-center;
+	display:none;
+	.transparent-white(0.3);
+	cursor: pointer;
+
+	>*{
+		cursor:default;
+		.flex(column);
+		.flex-center;
+		height:60%;
+		width:100%;
+		.transparent-black(0.8);
+		display:none;
+		color: white;
+		margin:20px auto;
+		/*
+		.title{
+			width: ~"calc( 100% - 20px )";
+			.no-flex;
+			margin: 0 auto;
+			color: white;
+			font-size: 20px;
+			text-align:center;
+			border-bottom:1px solid white;
+		}
+		*/
+	}
+
+	form{
+		.flex(column);
+		height: 100%;
+		width: 100%;
+	}
+
+	.create{
+		>*{
+			.no-flex;
+			margin-top:10px;
+		}
+
+		ul.list{
+			/*
+			height:100%;
+			width:100%;
+			*/
+			height: ~"calc(100% - 70px)";
+			width: 480px;
+			overflow: auto;
+			margin: 0;
+
+			span.type{
+				color: orange;
+			}
+
+			span.name, span.type{
+				font-size:16px;
+			}
+		}
+
+		textarea{
+			white-space: nowrap;
+			overflow: auto;
+			width:480px;
+			height:240px;
+		}
+	}
+
+	.setup{
+		.flex;
+		display: none;
+		ul.list{
+			.no-flex;
+			width: 165px;
+			li{
+				color:white;
+				height:30px;
+				line-height:30px;
+				padding-left:50px;
+				&:hover{
+					.transparent-white(0.1);
+				}
+			}
+		}
+
+		ul.content{
+			// 为了在较低宽度下正常显示滚动条, 考虑用js替代
+			height:100%;
+			overflow-y: auto;
+
+		  	li{
+			  .flex;
+			}
+		}
+	}
+
+	.update{
+		>*{
+			.no-flex;
+		}
+	}
+
+	.feedback{
+		>*{
+			.no-flex;
+			margin-top:10px;
+		}
+
+		textarea{
+			width:480px;
+			height:240px;
+		}
+	}
+
+	.exit{
+		>*{
+			.no-flex;
+		}
+	}
+
+	/*
+	>*:before{
+		content:'';
+		position:fixed;
+		left:0;
+		top:0;
+		height:100%;
+		width:100%;
+		.transparent-white(0.5);
+	}
+	*/
+}
+
+.main{
+	.flex;
+	height:100%;
+
+	aside{
+		.transparent-black(0.3);
+		.no-flex;
+		width: 165px;
+		ul{
+			li{
+				color:white;
+				height:30px;
+				line-height:30px;
+				padding-left:50px;
+				&:hover{
+					.transparent-white(0.1);
+				}
+			}
+		}
+	}
+
+	>ul{
+		.transparent-white(0.1);
+		overflow-y: auto;
+		
+		>li{
+			.flex(column);
+		}
+		
+		.task{
+			.transparent-white(0.5);
+			.flex();
+			font-size: 14px;
+			
+			&:not(:last-child){
+				border-bottom: 1px solid black;
+			}
+			/*
+			line-height: 30px;
+			height: 30px;
+			*/
+
+			>*{
+				display: block;
+			}
+
+			img{
+				.no-flex;
+			}
+
+		  	span.type{
+			  	margin-right: 5px;
+			}
+		}
+
+		.track{
+			font-size: 12px;
+			line-height: 30px;
+			height: 30px;
+			
+			border-bottom: 1px solid black;
+			
+			//background-image: -webkit-linear-gradient(left, rgba(0,255,0,0.5), rgba(0,255,0,0.1));
+			background-repeat: no-repeat;
+			background-size: 0% 40px;
+		}
+
+	}
+
+
+	nav{
+		.transparent-black(0.3);
+		.no-flex;
+		width: 40px;
+		>*{
+			width:40px;
+			height:40px;
+			text-shadow:0 0 1px rgba(0,0,0,0.1);
+			background-repeat: no-repeat;
+			background-position: center;
+			//-webkit-filter: invert(100%);
+
+			&:hover{
+				background-color:@blue;
+			}
+		}
+
+		.button-create{
+			background-image: url('../resource/image/button_create_white.png');
+		}
+
+		.button-setup{
+			background-image: url('../resource/image/button_setup_white.png');
+		}
+	}
+}
+
+body>footer{
+	.no-drag;
+	.no-flex;
+	.transparent-black(0.3);
+	height:32px;
+}
