@@ -143,22 +143,24 @@ replaceBat = (str, args...)->
 toNum = (obj)->
 	if isNaN obj then Number obj else obj
 
+###
 safeFilter = (str) ->
 	removeSpan = (str)->
 		str.replace('<span>', ' ').replace '</span>', ''
 	safeFilename = (str)->
-		str.replace /(\\|\:|\*|\?|\"|\<|\>|\||\s+)/g, ' '
-		# str.replace /(\/|\\|\:|\*|\?|\"|\<|\>|\||\s+)/g, ' '
+		# str.replace /(\\|\:|\*|\?|\"|\<|\>|\||\s+)/g, ' '
+		str.replace /(\/|\\|\:|\*|\?|\"|\<|\>|\||\s+)/g, ' '
 	safeFilename removeSpan str
+###
 
 getSafeFoldername = (str)->
 	str = str.replace /^\.+$/, '_'
 	str = str.replace /(\.)+$/, ''
-	str = safeFilter str
+	str = str.replace /(\\|\:|\*|\?|\"|\<|\>|\||\s+)/g, ' '
 	str = str[...229]
 
 getSafeFilename = (str)->
-	str = safeFilter str
+	str = str.replace /(\/|\\|\:|\*|\?|\"|\<|\>|\||\s+)/g, ' '
 	str = str[...220]
 
 getProxyString = ->
@@ -193,7 +195,7 @@ module.exports = {
 	replaceLast
 	replaceBat
 	toNum
-	safeFilter
+	# safeFilter
 	getSafeFilename
 	getSafeFoldername
 	getProxyString

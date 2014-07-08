@@ -56,13 +56,15 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 						'Referer': 'http://www.xiami.com'
 				proxy: common.getProxyString()
 				, (error, response, body)->
+					# console.log response
 					if not error and response.statusCode is 200
 						if body.location?
-							result = common.parseLocation body.location
-							if result
-								cb null, result.trim()
+							location = common.parseLocation body.location
+							if location
+								# console.log location
+								cb null, location.trim()
 							else
-								cb result
+								cb location
 						else
 							cb body
 					else
@@ -432,7 +434,7 @@ App.controller 'CreateCtrl',($scope, TaskQueue, Config, User)->
 											when 302
 												res.resume()
 												location = res.headers.location
-												fileDownload cb
+												fileDownload cb, result
 											else
 												# console.log res.statusCode
 												cb '无法下载'

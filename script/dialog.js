@@ -78,14 +78,14 @@
           }),
           proxy: common.getProxyString()
         }, function(error, response, body) {
-          var result;
+          var location;
           if (!error && response.statusCode === 200) {
             if (body.location != null) {
-              result = common.parseLocation(body.location);
-              if (result) {
-                return cb(null, result.trim());
+              location = common.parseLocation(body.location);
+              if (location) {
+                return cb(null, location.trim());
               } else {
-                return cb(result);
+                return cb(location);
               }
             } else {
               return cb(body);
@@ -464,7 +464,7 @@
                       case 302:
                         res.resume();
                         location = res.headers.location;
-                        return fileDownload(cb);
+                        return fileDownload(cb, result);
                       default:
                         return cb('无法下载');
                     }
