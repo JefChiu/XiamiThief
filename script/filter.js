@@ -2,7 +2,7 @@
   'use strict';
   var common, _;
 
-  common = require('../script/common');
+  common = require('./script/common');
 
   _ = require('underscore');
 
@@ -33,7 +33,7 @@
         return {
           song: '单曲',
           album: '专辑',
-          showcollect: '精选集',
+          collect: '精选集',
           artist: '艺人热门歌曲'
         }[type];
       }
@@ -43,11 +43,11 @@
 
   /*
   App.filter 'group', ->
-  	_.memoize (arr)->
-  		_.throttle (arr)->
-  			_.groupBy arr, (obj)->
-  				[obj.source.type, obj.source.id]
-  		, 100
+      _.memoize (arr)->
+          _.throttle (arr)->
+              _.groupBy arr, (obj)->
+                  [obj.source.type, obj.source.id]
+          , 100
    */
 
 }).call(this);

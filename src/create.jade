@@ -1,0 +1,17 @@
+.title(ng-show='step === 1') 输入你要下载的音乐所在页面的URL地址, 支持精选集/专辑/单曲/歌手页面(仅热门歌曲), 一行一个.
+textarea.links(autofocus, ng-show='step === 1', ng-model='links', right-click='popupMenuEditor($event)', ng-paste='pasteHandle()')
+button.submit(ng-show='step === 1', ng-click='analyze()') 分析下载地址
+ul.list(ng-show='step === 2')
+	li(ng-repeat='(taskIndex, task) in data')
+		input(id='task{{ taskIndex }}', type='checkbox', ng-click='checkAll($index)', ng-model='task.checkAll')
+		label(for='task{{ taskIndex }}')
+			span.type {{ task.type | type2name }} 
+			span.name {{ task.name }}
+		span(ng-click='task.expand = true', ng-hide='task.expand')  [+]
+		span(ng-click='task.expand = false', ng-show='task.expand')  [-]
+		ul(ng-show='task.expand')
+			li(ng-repeat='(trackIndex, track) in task.list')
+				input(id='task{{ taskIndex }}-{{ trackIndex }}', type='checkbox', checklist-model='task.checked', checklist-value='track', ng-model='checked', ng-click='check(taskIndex, trackIndex)')
+				label(for='task{{ taskIndex }}-{{ trackIndex }}')|{{ track.song.name }}
+button(ng-show='step === 2', ng-click='createTask()') 开始下载
+button(ng-show='step === 2', ng-click='step = 1') 放弃

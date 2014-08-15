@@ -1,0 +1,33 @@
+<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8"><style>body{
+ margin: 0;
+ padding: 0;
+ position: absolute;
+ top: 0;
+ left: 0;
+ height: 100%;
+ width: 100%;
+ background-color: deepskyblue;
+ /*
+ -webkit-app-region: drag;
+ */
+}
+
+div{
+ margin: 10%;
+ height: 50%;
+ width: 50%;
+ background-color: mediumvioletred;
+}
+
+iframe{
+ height: 70%;
+ width:80%;
+}</style><script>var gui = require('nw.gui');
+gui.App.addOriginAccessWhitelistEntry('http://xiami.com', 'app', 'xiamithief', true);
+gui.App.addOriginAccessWhitelistEntry('https://xiami.com', 'app', 'xiamithief', true);
+gui.App.addOriginAccessWhitelistEntry('https://login.xiami.com', 'app', 'xiamithief', true);
+gui.App.addOriginAccessWhitelistEntry('http://taobao.com', 'app', 'xiamithief', true);
+gui.App.addOriginAccessWhitelistEntry('https://taobao.com', 'app', 'xiamithief', true);
+gui.App.addOriginAccessWhitelistEntry('https://login.taobao.com', 'app', 'xiamithief', true);
+gui.App.addOriginAccessWhitelistEntry('app://xiamithief', 'http', 'xiamithief', true);
+gui.App.addOriginAccessWhitelistEntry('app://xiamithief', 'https', 'xiamithief', true);</script></head></html><body><iframe nwdisable nwfaketop src="http://login.xiami.com/member/login"></iframe><div></div></body>

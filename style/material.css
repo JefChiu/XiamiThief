@@ -1,0 +1,221 @@
+button,
+input[type='submit'],
+input[type='reset'],
+input[type='button'],
+.button {
+  min-height: 36px;
+  min-width: 88px;
+  border: none;
+}
+.margin-text {
+  margin: 4px;
+}
+.padding-text {
+  padding: 0 16px;
+}
+.z-depth-1.top-to-bottom,
+.z-depth-1.t2b {
+  box-shadow: 0 -1px 1.5px rgba(0, 0, 0, 0.12), 0 1px 1px rgba(0, 0, 0, 0.24);
+}
+.z-depth-1.bottom-to-top,
+.z-depth-1.b2t {
+  box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.12), 0 -1px 1px rgba(0, 0, 0, 0.24);
+}
+.z-depth-1.left-to-right,
+.z-depth-1.l2r {
+  box-shadow: -1px 0 1.5px rgba(0, 0, 0, 0.12), 1px 0 1px rgba(0, 0, 0, 0.24);
+}
+.z-depth-1.right-to-left,
+.z-depth-1.r2l {
+  box-shadow: 1px 0 1.5px rgba(0, 0, 0, 0.12), -1px 0 1px rgba(0, 0, 0, 0.24);
+}
+.z-depth-2.top-to-bottom,
+.z-depth-2.t2b {
+  box-shadow: 0 -3px 3px rgba(0, 0, 0, 0.16), 0 3px 3px rgba(0, 0, 0, 0.23);
+}
+.z-depth-2.bottom-to-top,
+.z-depth-2.b2t {
+  box-shadow: 0 3px 3px rgba(0, 0, 0, 0.16), 0 -3px 3px rgba(0, 0, 0, 0.23);
+}
+.z-depth-2.left-to-right,
+.z-depth-2.l2r {
+  box-shadow: -3px 0 3px rgba(0, 0, 0, 0.16), 3px 0 3px rgba(0, 0, 0, 0.23);
+}
+.z-depth-2.right-to-left,
+.z-depth-2.r2l {
+  box-shadow: 3px 0 3px rgba(0, 0, 0, 0.16), -3px 0 3px rgba(0, 0, 0, 0.23);
+}
+.z-depth-3.top-to-bottom,
+.z-depth-3.t2b {
+  box-shadow: 0 -10px 10px rgba(0, 0, 0, 0.19), 0 6px 3px rgba(0, 0, 0, 0.23);
+}
+.z-depth-3.bottom-to-top,
+.z-depth-3.b2t {
+  box-shadow: 0 10px 10px rgba(0, 0, 0, 0.19), 0 -6px 3px rgba(0, 0, 0, 0.23);
+}
+.z-depth-3.left-to-right,
+.z-depth-3.l2r {
+  box-shadow: -10px 0 10px rgba(0, 0, 0, 0.19), 6px 0 3px rgba(0, 0, 0, 0.23);
+}
+.z-depth-3.right-to-left,
+.z-depth-3.r2l {
+  box-shadow: 10px 0 10px rgba(0, 0, 0, 0.19), -6px 0 3px rgba(0, 0, 0, 0.23);
+}
+.z-depth-4.top-to-bottom,
+.z-depth-4.t2b {
+  box-shadow: 0 -14px 14px rgba(0, 0, 0, 0.25), 0 10px 5px rgba(0, 0, 0, 0.22);
+}
+.z-depth-4.bottom-to-top,
+.z-depth-4.b2t {
+  box-shadow: 0 14px 14px rgba(0, 0, 0, 0.25), 0 -10px 5px rgba(0, 0, 0, 0.22);
+}
+.z-depth-4.left-to-right,
+.z-depth-4.l2r {
+  box-shadow: -14px 0 14px rgba(0, 0, 0, 0.25), 10px 0 5px rgba(0, 0, 0, 0.22);
+}
+.z-depth-4.right-to-left,
+.z-depth-4.r2l {
+  box-shadow: 14px 0 14px rgba(0, 0, 0, 0.25), -10px 0 5px rgba(0, 0, 0, 0.22);
+}
+.z-depth-5.top-to-bottom,
+.z-depth-5.t2b {
+  box-shadow: 0 -19px 19px rgba(0, 0, 0, 0.3), 0 15px 6px rgba(0, 0, 0, 0.22);
+}
+.z-depth-5.bottom-to-top,
+.z-depth-5.b2t {
+  box-shadow: 0 19px 19px rgba(0, 0, 0, 0.3), 0 -15px 6px rgba(0, 0, 0, 0.22);
+}
+.z-depth-5.left-to-right,
+.z-depth-5.l2r {
+  box-shadow: -19px 0 19px rgba(0, 0, 0, 0.3), 15px 0 6px rgba(0, 0, 0, 0.22);
+}
+.z-depth-5.right-to-left,
+.z-depth-5.r2l {
+  box-shadow: 19px 0 19px rgba(0, 0, 0, 0.3), -15px 0 6px rgba(0, 0, 0, 0.22);
+}
+/*
+
+.headline{
+    letter-spacing: 0pt;
+}
+
+// 在Material Deisn中, Title降级为语义标签
+h1, h2, h3, h4, h5, h6,
+.title{
+    letter-spacing: 5pt;
+}
+
+.subhead{
+    letter-spacing: 10pt;
+}
+
+body,
+.body, .menu{
+    letter-spacing: 10pt;
+}
+
+button,
+input[type='submit'],
+input[type='reset'],
+input[type='button'],
+.button{
+    letter-spacing: 10pt;
+}
+
+label,
+.caption{
+    letter-spacing: 20pt;
+}
+
+.display-1, .display-2{
+    letter-spacing: 0pt;
+}
+
+.display-3{
+    letter-spacing: -5pt;
+}
+
+.display-4{
+    letter-spacing: -10pt;
+}
+
+*/
+.headline {
+  font-color: rgba(0, 0, 0, 0.87);
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.title {
+  font-color: rgba(0, 0, 0, 0.87);
+}
+.subhead {
+  font-color: rgba(0, 0, 0, 0.87);
+}
+body,
+.body {
+  font-color: rgba(0, 0, 0, 0.87);
+}
+button,
+input[type='submit'],
+input[type='reset'],
+input[type='button'],
+.button {
+  font-color: rgba(0, 0, 0, 0.87);
+}
+label,
+.caption {
+  font-color: rgba(0, 0, 0, 0.54);
+}
+.display-1,
+.display-2,
+.display-3,
+.display-4 {
+  font-color: rgba(0, 0, 0, 0.54);
+}
+.headline {
+  font-size: 24px;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.title {
+  font-size: 20px;
+}
+.subhead {
+  font-size: 16px;
+}
+body,
+.body,
+.menu {
+  font-size: 14px;
+}
+button,
+input[type='submit'],
+input[type='reset'],
+input[type='button'],
+.button {
+  font-size: 14px;
+}
+label,
+.caption {
+  font-size: 12px;
+}
+.display-1 {
+  font-size: 34px;
+}
+.display-2 {
+  font-size: 45px;
+}
+.display-3 {
+  font-size: 56px;
+}
+.display-4 {
+  font-size: 112px;
+}

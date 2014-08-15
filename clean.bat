@@ -1,1 +1,1 @@
-del %APPDATA%\..\Local\xiami-thief /s /x
+del %APPDATA%\..\Local\xiami-thief /s /q

@@ -1,0 +1,323 @@
+@display-type: 'device';
+@font-color: black;
+
+@font-size-12: 12px;
+@font-size-13: 13px; // Desktop
+@font-size-14: 14px;
+@font-size-15: 15px; // Desktop
+@font-size-16: 16px;
+@font-size-20: 20px;
+@font-size-24: 24px;
+@font-size-34: 34px;
+@font-size-45: 45px;
+@font-size-56: 56px;
+@font-size-112: 112px;
+
+@alpha-87: 0.87;
+@alpha-54: 0.54;
+@alpha-26: 0.26;
+
+button,
+input[type='submit'],
+input[type='reset'],
+input[type='button'],
+.button{
+    min-height: 36px;
+    min-width: 88px;
+    border: none;
+}
+
+.margin-text{
+    margin: 4px;
+}
+
+.padding-text{
+    padding: 0 16px;
+}
+
+// ========== Depth Shadow Begin ==========
+
+.z-depth-1{
+    &.top-to-bottom, &.t2b{
+        box-shadow:
+            0 -1px 1.5px rgba(0, 0, 0, 0.12),
+            0 1px 1px rgba(0, 0, 0, 0.24);
+    }
+    
+    &.bottom-to-top, &.b2t{
+        box-shadow:
+            0 1px 1.5px rgba(0, 0, 0, 0.12),
+            0 -1px 1px rgba(0, 0, 0, 0.24);
+    }
+    
+    &.left-to-right, &.l2r{
+        box-shadow:
+            -1px 0 1.5px rgba(0, 0, 0, 0.12),
+            1px 0 1px rgba(0, 0, 0, 0.24);
+    }
+    
+    &.right-to-left, &.r2l{
+        box-shadow:
+            1px 0 1.5px rgba(0, 0, 0, 0.12),
+            -1px 0 1px rgba(0, 0, 0, 0.24);
+    }
+}
+
+.z-depth-2{
+    &.top-to-bottom, &.t2b{
+        box-shadow:
+            0 -3px 3px rgba(0, 0, 0, 0.16),
+            0 3px 3px rgba(0, 0, 0, 0.23);
+    }
+    
+    &.bottom-to-top, &.b2t{
+        box-shadow:
+            0 3px 3px rgba(0, 0, 0, 0.16),
+            0 -3px 3px rgba(0, 0, 0, 0.23);
+    }
+
+    &.left-to-right, &.l2r{
+        box-shadow:
+            -3px 0 3px rgba(0, 0, 0, 0.16),
+            3px 0 3px rgba(0, 0, 0, 0.23);
+    }
+    
+    &.right-to-left, &.r2l{
+        box-shadow:
+            3px 0 3px rgba(0, 0, 0, 0.16),
+            -3px 0 3px rgba(0, 0, 0, 0.23);
+    }
+}
+
+.z-depth-3{
+    &.top-to-bottom, &.t2b{
+        box-shadow:
+            0 -10px 10px rgba(0, 0, 0, 0.19),
+            0 6px 3px rgba(0, 0, 0, 0.23);
+    }
+    
+    &.bottom-to-top, &.b2t{
+        box-shadow:
+            0 10px 10px rgba(0, 0, 0, 0.19),
+            0 -6px 3px rgba(0, 0, 0, 0.23);
+    }
+    
+    &.left-to-right, &.l2r{
+        box-shadow:
+            -10px 0 10px rgba(0, 0, 0, 0.19),
+            6px 0 3px rgba(0, 0, 0, 0.23);
+    }
+    
+    &.right-to-left, &.r2l{
+        box-shadow:
+            10px 0 10px rgba(0, 0, 0, 0.19),
+            -6px 0 3px rgba(0, 0, 0, 0.23);
+    }
+}
+
+.z-depth-4{
+    &.top-to-bottom, &.t2b{
+        box-shadow:
+            0 -14px 14px rgba(0, 0, 0, 0.25),
+            0 10px 5px rgba(0, 0, 0, 0.22);
+    }
+    
+    &.bottom-to-top, &.b2t{
+        box-shadow:
+            0 14px 14px rgba(0, 0, 0, 0.25),
+            0 -10px 5px rgba(0, 0, 0, 0.22);
+    }
+    
+    &.left-to-right, &.l2r{
+        box-shadow:
+            -14px 0 14px rgba(0, 0, 0, 0.25),
+            10px 0 5px rgba(0, 0, 0, 0.22);
+    }
+
+    &.right-to-left, &.r2l{
+        box-shadow:
+            14px 0 14px rgba(0, 0, 0, 0.25),
+            -10px 0 5px rgba(0, 0, 0, 0.22);
+    }
+}
+
+.z-depth-5{
+    &.top-to-bottom, &.t2b{
+        box-shadow:
+            0 -19px 19px rgba(0, 0, 0, 0.30),
+            0 15px 6px rgba(0, 0, 0, 0.22);
+    }
+
+    &.bottom-to-top, &.b2t{
+        box-shadow:
+            0 19px 19px rgba(0, 0, 0, 0.30),
+            0 -15px 6px rgba(0, 0, 0, 0.22);
+    }
+
+    &.left-to-right, &.l2r{
+        box-shadow:
+            -19px 0 19px rgba(0, 0, 0, 0.30),
+            15px 0 6px rgba(0, 0, 0, 0.22);   
+    }
+    
+    &.right-to-left, &.r2l{
+        box-shadow:
+            19px 0 19px rgba(0, 0, 0, 0.30),
+            -15px 0 6px rgba(0, 0, 0, 0.22);   
+    }
+}
+
+// ========== Depth Shadow End ==========
+
+// ========== Letter Spacing Begin ==========
+
+/*
+
+.headline{
+    letter-spacing: 0pt;
+}
+
+// 在Material Deisn中, Title降级为语义标签
+h1, h2, h3, h4, h5, h6,
+.title{
+    letter-spacing: 5pt;
+}
+
+.subhead{
+    letter-spacing: 10pt;
+}
+
+body,
+.body, .menu{
+    letter-spacing: 10pt;
+}
+
+button,
+input[type='submit'],
+input[type='reset'],
+input[type='button'],
+.button{
+    letter-spacing: 10pt;
+}
+
+label,
+.caption{
+    letter-spacing: 20pt;
+}
+
+.display-1, .display-2{
+    letter-spacing: 0pt;
+}
+
+.display-3{
+    letter-spacing: -5pt;
+}
+
+.display-4{
+    letter-spacing: -10pt;
+}
+
+*/
+
+// ========== Letter Spacing End ==========
+
+// ========== Font Color Begin ==========
+.headline{
+    font-color: rgba(red(@font-color), green(@font-color), blue(@font-color), @alpha-87);
+}
+
+// 在Material Deisn中, Title降级为语义标签
+h1, h2, h3, h4, h5, h6,
+.title{
+    font-color: rgba(red(@font-color), green(@font-color), blue(@font-color), @alpha-87);
+}
+
+.subhead{
+    font-color: rgba(red(@font-color), green(@font-color), blue(@font-color), @alpha-87);
+}
+
+body,
+.body{
+    font-color: rgba(red(@font-color), green(@font-color), blue(@font-color), @alpha-87);
+}
+
+button,
+input[type='submit'],
+input[type='reset'],
+input[type='button'],
+.button{
+    font-color: rgba(red(@font-color), green(@font-color), blue(@font-color), @alpha-87);
+}
+
+label,
+.caption{
+    font-color: rgba(red(@font-color), green(@font-color), blue(@font-color), @alpha-54);
+}
+
+.display-1, .display-2, .display-3, .display-4{
+    font-color: rgba(red(@font-color), green(@font-color), blue(@font-color), @alpha-54);
+}
+
+// ========== Font Color End ==========
+
+// ========== Font Size Beigin ==========
+
+.headline{
+    font-size: @font-size-24;
+}
+
+// 在Material Deisn中, Title降级为语义标签
+h1, h2, h3, h4, h5, h6,
+.title{
+    font-size: @font-size-20;
+}
+
+.subhead{
+    & when (@display-type = 'device'){
+        font-size: @font-size-16;
+    }
+    & when (@display-type = 'desktop'){
+        font-size: @font-size-15;
+    }
+}
+
+body,
+.body, .menu{
+    & when (@display-type = 'device'){
+        font-size: @font-size-14;
+    }
+    & when (@display-type = 'desktop'){
+        font-size: @font-size-13;
+    }
+}
+
+button,
+input[type='submit'],
+input[type='reset'],
+input[type='button'],
+.button{
+    font-size: @font-size-14;
+}
+
+label,
+.caption{
+    font-size: @font-size-12;
+}
+
+.display-1{
+    font-size: @font-size-34;
+}
+
+.display-2{
+    font-size: @font-size-45;
+}
+
+.display-3{
+    font-size: @font-size-56;
+}
+
+.display-4{
+    font-size: @font-size-112;
+}
+
+// ========== Font Size End ==========
