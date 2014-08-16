@@ -148,6 +148,7 @@
       }, function(error, response, body) {
         var e, hasCheckcode, _ref, _ref1, _ref2, _ref3;
         hasCheckcode = common.inStr(body, 'regcheckcode.taobao.com') || common.inStr(body, '<div class="msg e needcode">');
+        console.log(url, 'hasCheckcode:' + hasCheckcode);
         if (hasCheckcode) {
           if (newWindow != null) {
             return common.setInterval(function() {
@@ -183,7 +184,9 @@
               console.error(e, body);
             }
           }
-          return typeof cb === "function" ? cb(error, response, body) : void 0;
+          if (cb) {
+            return cb(error, response, body);
+          }
         }
       });
       return req;
@@ -562,7 +565,8 @@
         return q = {
           list: [],
           remove: function(index) {
-            delete q.list[index];
+            q.list[index].state = State.Fail;
+            q.list[index].hide = true;
             return refresh();
           },
           push: function() {
@@ -822,9 +826,12 @@
         return menuStart.popup(left, top);
       }
     });
-    return $('.dialog>*').click(function(e) {
+    $('.dialog>*').click(function(e) {
       return e.stopPropagation();
     });
+    if (os.platform() === 'win32' && os.release().split('.') === '5') {
+      return $('body').addClass('.xp-font');
+    }
   });
 
 }).call(this);

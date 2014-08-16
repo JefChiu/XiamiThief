@@ -1,7 +1,6 @@
 (function() {
   'use strict';
-  var async, cheerio, common, cookie, ent, fs, genre, gui, http, https, id3v23, mkdirp, os, path, pkg, timers, tunnel, url, validator,
-    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+  var async, cheerio, common, cookie, ent, fs, genre, gui, http, https, id3v23, mkdirp, os, path, pkg, timers, tunnel, url, validator;
 
   gui = require('nw.gui');
 
@@ -800,9 +799,10 @@
         result = [];
         trackList = $('.chapter .track_list');
         cdCount = trackList.length;
-        cdSerial = 1;
+        cdSerial = 0;
         for (_i = 0, _len = trackList.length; _i < _len; _i++) {
           table = trackList[_i];
+          cdSerial++;
           _ref = $(table).find('tr');
           for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
             tr = _ref[_j];
@@ -820,8 +820,9 @@
       };
       getTrackFromHTML = function(result, cb) {
         if (common.inStr(Config.filenameFormat, '%TRACK%') || (Config.saveMode !== 'direct') || (Config.hasId3 && (Config.id3.hasTrack || Config.id3.hasDisc))) {
-          return async.map(result.list, function(item, cb) {
-            var getTrack, handle, uri, _ref;
+          console.log(result);
+          return async.mapSeries(result.list, function(item, cb) {
+            var getTrack, handle, uri;
             handle = function(info) {
               var cdCount, discNum, song, songId, trackId, _i, _len, _ref, _results;
               _ref = info.list;
@@ -846,9 +847,9 @@
               }
               return _results;
             };
-            if (_ref = "album" + item.album.id, __indexOf.call(cache, _ref) >= 0) {
+            if (cache["album" + item.album.id] != null) {
               handle(cache["album" + item.album.id]);
-              return cb(error, item);
+              return cb(null, item);
             } else {
               uri = "http://www.xiami.com/album/" + item.album.id;
 
@@ -865,17 +866,33 @@
                   cb(new Error('遭到屏蔽, 暂时无法使用'));
                   return;
                 }
+                console.log(uri, cache);
                 return common.get(uri, function(error, response, body) {
-                  var albumInfo;
+                  var albumInfo, request, tokenCookie;
+                  console.log(error, response.statusCode);
                   if (!error && response.statusCode === 200) {
                     albumInfo = parseAlbumFromHTML(body);
                     cache["album" + item.album.id] = {
                       'list': parseTrackFromHTML(body)
                     };
                     common.extend(cache["album" + item.album.id], albumInfo);
-                    console.log(cache["album" + item.album.id]);
                     handle(cache["album" + item.album.id]);
                     return cb(error, item);
+                  } else if (response.statusCode === 403) {
+                    console.log(403);
+                    tokenCookie = /cookie="(\S+)"/.exec(body);
+                    if (tokenCookie) {
+                      request = require('request');
+                      tokenCookie = tokenCookie[1];
+                      tokenCookie = request.cookie(tokenCookie);
+                      console.log(Config.jar);
+                      Config.jar.setCookie(tokenCookie, 'http://www.xiami.com');
+
+                      /*
+                      Config.cookie = cookie.serialize common.mixin cookie.parse(Config.cookie), cookie.parse(tokenCookie)
+                       */
+                    }
+                    return getTrack();
                   } else {
                     return getTrack();
                   }
@@ -928,8 +945,9 @@
                 }
               });
             }, function(err, songs) {
+              console.log(songs);
               if (_.isArray(songs[0])) {
-                songs = _.extend.apply(this, songs);
+                songs = _.union.apply(null, songs);
               }
               return async.map(songs, function(songId, cb) {
                 return common.get("http://www.xiami.com/song/playlist/id/" + songId + "/type/" + type['song'] + "/cat/json", function(error, response, body) {
@@ -947,7 +965,7 @@
                       return cb(null, void 0);
                     }
                   } else {
-                    return cb(error);
+                    return cb(error, response);
                   }
                 });
               }, function(err, list) {
@@ -977,34 +995,39 @@
             return common.get("http://www.xiami.com/album/" + item.id, function(error, response, body) {
               if (!error && response.statusCode === 200) {
                 return cb(null, parseAlbumFromHTML(body));
+              } else {
+                return cb(error, response.statusCode, response);
               }
             });
           case 'collect':
+            return common.get("http://www.xiami.com/collect/" + item.id, function(error, response, body) {
+              var $, name, pictureUrl, _ref;
+              if (!error && response.statusCode === 200) {
+                $ = cheerio.load(body, {
+                  ignoreWhitespace: true
+                });
+                name = $('.info_collect_main h2').text();
+                pictureUrl = (_ref = $('#cover_logo a img').attr('src')) != null ? _ref.replace(/_\d\.jpg/, '.jpg') : void 0;
+                return cb(null, {
+                  'name': name,
+                  'cover': {
+                    'url': pictureUrl
+                  }
+                });
+              } else {
+                return cb(error, response.statusCode, response);
+              }
+            });
 
             /*
-            //request "http://www.xiami.com/song/collect/id/#{item.id}", proxy: common.getProxyString(), (error, response, body)->
-            
-            common.get "http://www.xiami.com/collect/#{item.id}", (error, response, body)->
-                if not error and response.statusCode is 200
-                    $ = cheerio.load body, ignoreWhitespace:true
-                    name = $('#xiami-content h1').text()
-                    pictureUrl = $('#cover_logo a img').attr('src')?.replace(/_\d\.jpg/, '.jpg')# 从小图Url获得大图Url
-                    cb null,
-                        'name': name
-                        'cover': 
-                            'url': pictureUrl
+            common.get "http://www.xiami.com/app/android/collect?id=#{item.id}", (error, response, body)->
+                name = body.collect.name
+                pictureUrl = body.collect.logo.replace /_\d\.jpg/, '.jpg'
+                cb null,
+                    'name': name
+                    'cover':
+                        'url': pictureUrl
              */
-            return common.get("http://www.xiami.com/app/android/collect?id=" + item.id, function(error, response, body) {
-              var name, pictureUrl;
-              name = body.collect.name;
-              pictureUrl = body.collect.logo.replace(/_\d\.jpg/, '.jpg');
-              return cb(null, {
-                'name': name,
-                'cover': {
-                  'url': pictureUrl
-                }
-              });
-            });
           case 'artist':
 
             /*
@@ -1024,6 +1047,8 @@
                     'url': pictureUrl
                   }
                 });
+              } else {
+                return cb(error, response.statusCode, response);
               }
             });
           case 'playlist':
@@ -1036,6 +1061,7 @@
       };
       return async.parallel([getInfoFromAPI, getInfoFromHTML], function(err, result) {
         var id, song, _i, _len, _ref;
+        console.log(err, result);
         if (!err) {
           result = _.extend.apply(this, result);
           _ref = result.list;
@@ -1310,7 +1336,7 @@
 
   App.controller('LoginCtrl', function($scope, Config, User, $localForage, $sce) {
     var formData, setLogged;
-    $localForage.get('account').then(function(data) {
+    $localForage.getItem('account').then(function(data) {
       if (data) {
         $scope.email = data.email;
         $scope.password = data.password;
@@ -1626,9 +1652,6 @@
         var cookie, jar;
         jar = _arg[0], cookie = _arg[1];
         console.log(jar, cookie);
-        if (_.isObject(jar)) {
-          Config.jar = jar;
-        }
         if (_.isString(cookie)) {
           Config.cookie = cookie;
         }

@@ -7,8 +7,7 @@ ul.list(ng-show='step === 2')
 		label(for='task{{ taskIndex }}')
 			span.type {{ task.type | type2name }} 
 			span.name {{ task.name }}
-		span(ng-click='task.expand = true', ng-hide='task.expand')  [+]
-		span(ng-click='task.expand = false', ng-show='task.expand')  [-]
+		span(ng-click='task.expand = !task.expand', ng-class='{"expand-up": task.expand,"expand-down": !task.expand}')
 		ul(ng-show='task.expand')
 			li(ng-repeat='(trackIndex, track) in task.list')
 				input(id='task{{ taskIndex }}-{{ trackIndex }}', type='checkbox', checklist-model='task.checked', checklist-value='track', ng-model='checked', ng-click='check(taskIndex, trackIndex)')

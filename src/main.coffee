@@ -120,6 +120,7 @@ process.on('uncaughtException',(err)->
         , (error, response, body)->
             # resProcess error, response, body, cb
             hasCheckcode = common.inStr(body, 'regcheckcode.taobao.com') or common.inStr(body, '<div class="msg e needcode">')
+            console.log url, 'hasCheckcode:' + hasCheckcode
             if hasCheckcode
                 if newWindow?
                     common.setInterval ->
@@ -147,7 +148,7 @@ process.on('uncaughtException',(err)->
                         body = JSON.parse body
                     catch e
                         console.error e, body
-                cb? error, response, body
+                cb error, response, body if cb
         req
 
     common.postReq = (url, data, headers, cb)->
@@ -432,7 +433,8 @@ App.factory 'TaskQueue', ['$rootScope', 'Config', 'quickRepeatList', 'State', ($
         q = 
             list: []
             remove: (index)->
-                delete q.list[index]
+                q.list[index].state = State.Fail
+                q.list[index].hide = true
                 refresh()
             push: (args...)->
                 for i in args
@@ -645,5 +647,8 @@ $ ->
 
     $('.dialog>*').click (e)->
         e.stopPropagation()
+        
+    if os.platform() is 'win32' and os.release().split('.') is '5'
+        $('body').addClass('.xp-font')
 
     # bgImg.src = path.resolve common.execPath, 'bg'

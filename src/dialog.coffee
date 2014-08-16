@@ -689,8 +689,9 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
             result = []
             trackList = $ '.chapter .track_list'
             cdCount = trackList.length
-            cdSerial = 1
+            cdSerial = 0
             for table in trackList
+                cdSerial++
                 for tr in $(table).find 'tr'
                     trackId = $(tr).find('.trackid')?.text()
                     songId = $(tr).find('.song_name a')?.attr('href')?.match(/song\/(\d+)/)?[1]
@@ -705,7 +706,8 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
             if  common.inStr(Config.filenameFormat, '%TRACK%') or
             (Config.saveMode isnt 'direct') or
             (Config.hasId3 and (Config.id3.hasTrack or Config.id3.hasDisc))
-                async.map result.list, (item, cb)->
+                console.log result
+                async.mapSeries result.list, (item, cb)->
                         handle = (info)->
                             for song in info.list
                                 songId = song.song_id
@@ -719,9 +721,10 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
                                     item.track.id = trackId
                                     item.track.cd = cdCount
                                     break
-                        if "album#{item.album.id}" in cache
+                        
+                        if cache["album#{item.album.id}"]?
                             handle cache["album#{item.album.id}"]
-                            cb error, item
+                            cb null, item
                         else
                             uri = "http://www.xiami.com/album/#{item.album.id}"
                             # uri = "http://www.xiami.com/app/android/album?id=#{item.album.id}"
@@ -734,18 +737,36 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
                             ###
                             getTrack = ->
                                 getTrack.count++
+                                
                                 if getTrack.count > 3
                                     cb new Error '遭到屏蔽, 暂时无法使用'
                                     return
+                                
+                                console.log uri, cache
+                                
                                 common.get uri, (error, response, body)->
-                                    # console.log body
+                                    console.log error, response.statusCode
                                     if not error and response.statusCode is 200
                                         albumInfo = parseAlbumFromHTML body
                                         cache["album#{item.album.id}"] = 'list': parseTrackFromHTML body
                                         common.extend cache["album#{item.album.id}"], albumInfo
-                                        console.log cache["album#{item.album.id}"]
+                                        # console.log cache["album#{item.album.id}"]
                                         handle cache["album#{item.album.id}"]
                                         cb error, item
+                                    else if response.statusCode is 403
+                                        console.log 403
+                                        tokenCookie = /cookie="(\S+)"/.exec body
+                                        if tokenCookie
+                                            request = require('request')
+                                            tokenCookie = tokenCookie[1]
+                                            tokenCookie = request.cookie tokenCookie
+                                            console.log Config.jar
+                                            Config.jar.setCookie tokenCookie, 'http://www.xiami.com'
+                                            # console.log tokenCookie, cookie.parse tokenCookie
+                                            ###
+                                            Config.cookie = cookie.serialize common.mixin cookie.parse(Config.cookie), cookie.parse(tokenCookie)
+                                            ###
+                                        getTrack()
                                     else
                                         getTrack()
                             getTrack.count = 0
@@ -770,8 +791,9 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
                             else
                                 cb error
                     , (err, songs)->
+                        console.log songs
                         if _.isArray songs[0]
-                            songs = _.extend.apply this, songs
+                            songs = _.union.apply null, songs
                         async.map songs, (songId, cb)->
                             common.get "http://www.xiami.com/song/playlist/id/#{songId}/type/#{type['song']}/cat/json", (error, response, body)->
                                 if not error and response.statusCode is 200
@@ -782,7 +804,7 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
                                     else
                                         cb null, undefined
                                 else
-                                    cb error
+                                    cb error, response
                         , (err, list)->
                             result =
                                 'name': "用户#{item.id}的第#{item.start}到#{item.end}页收藏"
@@ -804,20 +826,23 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
                     common.get "http://www.xiami.com/album/#{item.id}", (error, response, body) ->
                         if not error and response.statusCode is 200
                             cb null, parseAlbumFromHTML body
+                        else
+                            cb error, response.statusCode, response
                 when 'collect'
-                    ###
-                    //request "http://www.xiami.com/song/collect/id/#{item.id}", proxy: common.getProxyString(), (error, response, body)->
+                    # equest "http://www.xiami.com/song/collect/id/#{item.id}", proxy: common.getProxyString(), (error, response, body)->
 
                     common.get "http://www.xiami.com/collect/#{item.id}", (error, response, body)->
                         if not error and response.statusCode is 200
                             $ = cheerio.load body, ignoreWhitespace:true
-                            name = $('#xiami-content h1').text()
+                            name = $('.info_collect_main h2').text()
                             pictureUrl = $('#cover_logo a img').attr('src')?.replace(/_\d\.jpg/, '.jpg')# 从小图Url获得大图Url
                             cb null,
                                 'name': name
                                 'cover': 
                                     'url': pictureUrl
-                  ###
+                        else
+                            cb error, response.statusCode, response
+                    ###
                     common.get "http://www.xiami.com/app/android/collect?id=#{item.id}", (error, response, body)->
                         name = body.collect.name
                         pictureUrl = body.collect.logo.replace /_\d\.jpg/, '.jpg'
@@ -825,6 +850,7 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
                             'name': name
                             'cover':
                                 'url': pictureUrl
+                    ###
                 when 'artist'
                     ###
                     request "http://www.xiami.com/artist/#{item.id}", proxy: common.getProxyString(), (error, response, body)->
@@ -838,6 +864,8 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
                                 'name': name
                                 'cover':
                                     'url': pictureUrl
+                        else
+                            cb error, response.statusCode, response
                 when 'playlist'
                     cb null, 'name': '播放列表' + item.id
                 else
@@ -847,6 +875,7 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
             getInfoFromAPI
             getInfoFromHTML
         ], (err, result)->
+            console.log err, result
             if not err
                 result = _.extend.apply this, result
                 for song, id in result.list
@@ -1048,7 +1077,7 @@ App.controller 'ConfigCtrl', ($scope, Config)->
         return
 
 App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
-    $localForage.get('account').then (data)->
+    $localForage.getItem('account').then (data)->
         if data
             $scope.email = data.email
             $scope.password = data.password
@@ -1307,7 +1336,7 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
         pCookie = Promise.all [$localForage.getItem('config.jar'), $localForage.getItem('config.cookie')]
         pCookie.then ([jar, cookie])->
             console.log jar, cookie
-            Config.jar = jar if _.isObject jar
+            # Config.jar = jar if _.isObject jar
             Config.cookie = cookie if _.isString cookie
             consolo.log Config.jar, Config.cookie
             setLogged()

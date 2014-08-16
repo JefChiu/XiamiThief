@@ -113,8 +113,8 @@ textarea{
 }
 
 .cover{
-      background-image: url('../resource/image/cd100.gif');
-      background-size: 100%;
+    background-image: url('../resource/image/cd100.gif');
+    background-size: 100%;
 }
 
 .transparent-white(@alpha){
@@ -126,7 +126,9 @@ textarea{
 }
 
 .hq:before{
-      content:"高音质";
+    content: "高音质";
+    background-color: orange;
+    padding: 0 2px
 }
 
 #bg{
@@ -136,6 +138,21 @@ textarea{
     height: 100%;
     width: 100%;
     z-index: -1;
+}
+
+.expand-up{
+    height: 20px;
+    width: 20px;
+    display: inline-block;
+    background-image: url('../resource/image/button_expand.png');
+}
+
+.expand-down{
+    height: 20px;
+    width: 20px;
+    display: inline-block;
+    background-image: url('../resource/image/button_expand.png');
+    -webkit-transform: rotate(180deg);
 }
 
 body{
@@ -282,6 +299,10 @@ nav.control{
     }
 }
 
+.xp-font{
+    font-family: SimSun;
+}
+
 .text{
     .flex(column);
     .flex-center-vertical;
@@ -352,6 +373,7 @@ ul.task{
     }
 
     .create{
+        .transparent-white(0.5);
         >*{
             .no-flex;
             margin-top:10px;
@@ -362,7 +384,7 @@ ul.task{
             height:100%;
             width:100%;
             */
-            height: ~"calc(100% - 70px)";
+            height: ~"calc(100% - 100px)";
             width: 480px;
             overflow: auto;
             margin: 0;

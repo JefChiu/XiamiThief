@@ -93,6 +93,8 @@ textarea {
 }
 .hq:before {
   content: "高音质";
+  background-color: orange;
+  padding: 0 2px;
 }
 #bg {
   position: absolute;
@@ -101,6 +103,19 @@ textarea {
   height: 100%;
   width: 100%;
   z-index: -1;
+}
+.expand-up {
+  height: 20px;
+  width: 20px;
+  display: inline-block;
+  background-image: url('../resource/image/button_expand.png');
+}
+.expand-down {
+  height: 20px;
+  width: 20px;
+  display: inline-block;
+  background-image: url('../resource/image/button_expand.png');
+  -webkit-transform: rotate(180deg);
 }
 body {
   display: -webkit-flex;
@@ -234,6 +249,9 @@ nav.control .button-close {
 nav.control .button-close:hover {
   background-color: #e74c3c;
 }
+.xp-font {
+  font-family: SimSun;
+}
 .text {
   display: -webkit-flex;
   display: flex;
@@ -348,6 +366,9 @@ ul.task{
   -webkit-flex: 1;
   flex: 1;
 }
+.dialog .create {
+  background-color: rgba(255, 255, 255, 0.5);
+}
 .dialog .create > * {
   -webkit-flex: none;
   flex: none;
@@ -358,7 +379,7 @@ ul.task{
             height:100%;
             width:100%;
             */
-  height: calc(100% - 70px);
+  height: calc(100% - 100px);
   width: 480px;
   overflow: auto;
   margin: 0;

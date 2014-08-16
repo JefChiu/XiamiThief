@@ -45,7 +45,7 @@ html(lang='zh')
                     li 已完成
             //article
             ul
-                li(quick-ng-repeat='(taskIndex, task) in list', quick-repeat-list='tasks', ng-if='task')
+                li(quick-ng-repeat='(taskIndex, task) in list', quick-repeat-list='tasks', ng-if='task', ng-hide='task.hide')
                     .task(
                         ng-click='task.expand = !task.expand',
                         right-click='popupMenuTask($event, task)'
