@@ -1091,7 +1091,6 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
         pCookieSaved = Promise.all [$localForage.setItem('config.jar', Config.jar), $localForage.setItem('config.cookie', Config.cookie)]
         console.log Config.jar, Config.cookie
         pCookieSaved.then ->
-            # 重复 Begin
             async.waterfall [
                 (cb)->
                     common.post 'http://www.xiami.com/index/home', cb
@@ -1141,7 +1140,6 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
                     user_id: User.id
                     tone_type: 1
             ###
-            # 重复 End
         
     $scope.loginFormInit = ->
         async.waterfall [
@@ -1254,7 +1252,7 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
 
     $scope.loginByCookie = ->
         Config.cookie = $scope.cookie
-        $scope.$apply setLogged
+        setLogged()
 
     $scope.loginByUserData = ->
         formData['email'] = $scope.email

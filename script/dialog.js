@@ -1556,7 +1556,7 @@
     };
     $scope.loginByCookie = function() {
       Config.cookie = $scope.cookie;
-      return $scope.$apply(setLogged);
+      return setLogged();
     };
     $scope.loginByUserData = function() {
       formData['email'] = $scope.email;
