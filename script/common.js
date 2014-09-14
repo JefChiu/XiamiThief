@@ -13,7 +13,7 @@
 
   timers = require('timers');
 
-  isArtist = /www.xiami.com\/artist\/(\d+)/;
+  isArtist = /www.xiami.com\/artist\/(?:top\/id\/)?(\d+)(?:\/page\/(\d+)-?(\d+)?)?/;
 
   isSong = /www.xiami.com\/song\/(\d+)/;
 
@@ -58,6 +58,7 @@
     useProxy: 'false',
     useMonitoringClipboard: false,
     saveMode: 'smartClassification',
+    fileExistSolution: 'coverSmallFile',
     proxy: {
       host: '',
       port: 80,
@@ -85,7 +86,6 @@
       'Accept-Language': 'zh-CN,zh;q=0.8',
       'Cache-Control': 'max-age=0',
       'Connection': 'keep-alive',
-      'Host': 'www.xiami.com',
       'Origin': 'http://www.xiami.com',
       'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36'
     }

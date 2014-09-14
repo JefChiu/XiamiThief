@@ -5,7 +5,6 @@ input[type='button'],
 .button {
   min-height: 36px;
   min-width: 88px;
-  border: none;
 }
 .margin-text {
   margin: 4px;
@@ -141,7 +140,7 @@ label,
 
 */
 .headline {
-  font-color: rgba(0, 0, 0, 0.87);
+  color: rgba(0, 0, 0, 0.87);
 }
 h1,
 h2,
@@ -150,10 +149,10 @@ h4,
 h5,
 h6,
 .title {
-  font-color: rgba(0, 0, 0, 0.87);
+  color: rgba(0, 0, 0, 0.87);
 }
 .subhead {
-  font-color: rgba(0, 0, 0, 0.87);
+  color: rgba(0, 0, 0, 0.87);
 }
 body,
 .body {
@@ -164,17 +163,17 @@ input[type='submit'],
 input[type='reset'],
 input[type='button'],
 .button {
-  font-color: rgba(0, 0, 0, 0.87);
+  color: rgba(0, 0, 0, 0.87);
 }
 label,
 .caption {
-  font-color: rgba(0, 0, 0, 0.54);
+  color: rgba(0, 0, 0, 0.54);
 }
 .display-1,
 .display-2,
 .display-3,
 .display-4 {
-  font-color: rgba(0, 0, 0, 0.54);
+  color: rgba(0, 0, 0, 0.54);
 }
 .headline {
   font-size: 24px;
@@ -205,7 +204,7 @@ input[type='button'],
 }
 label,
 .caption {
-  font-size: 12px;
+  font-size: 14px;
 }
 .display-1 {
   font-size: 34px;

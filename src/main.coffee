@@ -269,7 +269,7 @@ window.addEventListener 'load', ->
     win.show()
 ###
 
-#window.openBrowser = gui.Shell.openExternal
+#window.openBrowser = gui.Shell.openItem
 
 common.loadLoginPage = ->
     if not common.user.logged
@@ -492,7 +492,7 @@ App.factory 'TaskQueue', ['$rootScope', 'Config', 'quickRepeatList', 'State', ($
 ]
 
 App.controller 'TaskCtrl', ($scope, TaskQueue, State, quickRepeatList)->
-    createMenuTask = (info)->
+    createMenuTask = (info, taskIndex)->
         menu = new gui.Menu
         
         menuItem = (options)->
@@ -506,7 +506,7 @@ App.controller 'TaskCtrl', ($scope, TaskQueue, State, quickRepeatList)->
                     when 'song'
                         link = "http://www.xiami.com/song/#{info.list[0].id}"
                     when 'album'
-                        link = "http://www.xiami.com/album/#{info.id}"
+                        link = "http://www.xiami.com/album/top/id/#{info.id}/page/#{info.start}"
                     when 'collect'
                         link = "http://www.xiami.com/collect/#{info.id}"
                     when 'artist'
@@ -515,7 +515,13 @@ App.controller 'TaskCtrl', ($scope, TaskQueue, State, quickRepeatList)->
                         link = "http://www.xiami.com/space/lib-song/u/#{info.id}/page/#{info.start}"
                     else
                         link = "http://www.xiami.com/"
-                gui.Shell.openExternal link
+                gui.Shell.openItem link
+                
+        menu.append menuItem
+            type: 'normal'
+            label: '移除此项'
+            click: ->
+                $scope.removeTask(taskIndex)
 
         if os.platform() is 'drawin' and version[1] >= 10
             menu.createMacBuiltin 'xiami-thief'
@@ -533,14 +539,14 @@ App.controller 'TaskCtrl', ($scope, TaskQueue, State, quickRepeatList)->
             label: '打开文件'
             click: ->
                 console.log info, path.resolve(info?.save?.path, info?.save?.name) + '.mp3'
-                gui.Shell.openExternal '"' + path.resolve(info.save.path, info.save.name) + '.mp3' + '"'
+                gui.Shell.openItem '"' + path.resolve(info.save.path, info.save.name) + '.mp3' + '"'
 
         menu.append menuItem
             type: 'normal'
             label: '打开文件存放目录'
             click: ->
                 console.log info, info?.save?.path
-                gui.Shell.openExternal '"' + info.save.path + '"'
+                gui.Shell.openItem '"' + info.save.path + '"'
 
         menu.append menuItem
             type: 'separator'
@@ -549,7 +555,7 @@ App.controller 'TaskCtrl', ($scope, TaskQueue, State, quickRepeatList)->
             type: 'normal'
             label: '在虾米音乐网打开'
             click: ->
-                gui.Shell.openExternal "http://www.xiami.com/song/#{info.song.id}"
+                gui.Shell.openItem "http://www.xiami.com/song/#{info.song.id}"
 
         menu.append menuItem
             type: 'separator'
@@ -597,8 +603,8 @@ App.controller 'TaskCtrl', ($scope, TaskQueue, State, quickRepeatList)->
         else
             false
 
-    $scope.popupMenuTask = ($event, info)->
-        menuTask = createMenuTask info
+    $scope.popupMenuTask = ($event, info, taskIndex)->
+        menuTask = createMenuTask info, taskIndex
         menuTask.popup $event.clientX, $event.clientY
 
     $scope.popupMenuTrack = ($event, info)->

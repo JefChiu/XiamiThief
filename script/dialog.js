@@ -56,7 +56,7 @@
     return common.config;
   });
 
-  App.controller('CreateCtrl', function($scope, $interval, TaskQueue, Config, User) {
+  App.controller('CreateCtrl', function($scope, $interval, State, TaskQueue, Config, User) {
     var cache, clipboardText, getInfo, getLocation, monitoringClipboard, requestFile, startMonitoringClipboard, type;
     type = {
       song: 0,
@@ -213,9 +213,10 @@
       pathFolder = info.save.path;
       filename = info.save.name;
       return mkdirp(pathFolder, function(err) {
-        var coverDownload, fileDownload, lyricDownload, resizeImage, savePath, writeId3Info;
+        var coverDownload, fileDownload, lyricDownload, resizeImage, savePath, timestamp, writeId3Info;
         if (!err) {
           savePath = path.resolve(pathFolder, filename);
+          timestamp = new Date().getTime();
           coverDownload = function(cb) {
             var coverPath;
             coverPath = path.resolve(pathFolder, "" + info.album.id + ".jpg");
@@ -393,32 +394,59 @@
                   image.src = if imagePath[...4] is 'http' then imagePath else "file:///#{imagePath}"
            */
           lyricDownload = function(cb) {
-            var f, req;
             if ((Config.hasLyric || (Config.hasId3 && Config.id3.hasLyric)) && info.lyric.url) {
               if (Config.hasLyric) {
-                f = fs.createWriteStream("" + savePath + ".lrc");
-                f.on('finish', function() {
-                  if (Config.hasId3 && Config.id3.hasLyric) {
-                    return fs.readFile("" + savePath + ".lrc", function(err, data) {
-                      return cb(err, data.toString());
+                return fs.exists("" + savePath + ".lrc", function(exist) {
+                  var transportStream;
+                  transportStream = function(suffix) {
+                    var f, lrcFilename, req;
+                    lrcFilename = "" + (savePath + (suffix ? ' ' + suffix : '')) + ".lrc";
+                    f = fs.createWriteStream(lrcFilename);
+                    f.on('finish', function() {
+                      if (Config.hasId3 && Config.id3.hasLyric) {
+                        return fs.readFile(lrcFilename, function(err, data) {
+                          return cb(err, data.toString());
+                        });
+                      } else {
+                        return cb(null);
+                      }
+                    });
+                    f.on('error', function(err) {
+                      return cb(err);
+                    });
+                    req = common.get(info.lyric.url);
+                    return req.pipe(f);
+
+                    /*
+                    request(info.lyric.url,
+                        jar: false
+                        headers: {}
+                        proxy: common.getProxyString()
+                    ).pipe f
+                     */
+                  };
+                  if (exist) {
+                    return fs.stat("" + savePath + ".lrc", function(stat) {
+                      switch (Config.fileExistSolution) {
+                        case 'alwaysCover':
+                          return transportStream();
+                        case 'alwaysSkip':
+                          return cb(null);
+                        case 'coverSmallFile':
+                          if (stat.size >= contentLength + id3Size) {
+                            return cb(null);
+                          } else {
+                            return transportStream();
+                          }
+                          break;
+                        case 'filenameTimestamp':
+                          return transportStream(timestamp);
+                      }
                     });
                   } else {
-                    return cb(null);
+                    return transportStream();
                   }
                 });
-                f.on('error', function(err) {
-                  return cb(err);
-                });
-                req = common.get(info.lyric.url);
-                return req.pipe(f);
-
-                /*
-                request(info.lyric.url,
-                    jar: false
-                    headers: {}
-                    proxy: common.getProxyString()
-                ).pipe f
-                 */
               } else {
                 return common.get(info.lyric.url, function(error, response, body) {
                   return cb(error, body);
@@ -441,7 +469,7 @@
             var g, id3Writer, image, lyric;
             console.log(result);
             if (Config.hasId3) {
-              id3Writer = new id3v23("" + savePath + ".download");
+              id3Writer = new id3v23(path.resolve(pathFolder, "" + info.song.id + ".download"));
               if (Config.id3.hasAlbum && info.album.name) {
                 id3Writer.setTag('TALB', info.album.name);
               }
@@ -451,8 +479,8 @@
               if (Config.id3.hasAlbumArtist && info.album.artist) {
                 id3Writer.setTag('TPE2', info.album.artist);
               }
+              console.log(info.artist.name, info.album.artist);
               if (Config.id3.hasTitle && info.song.name) {
-                console.log(info.song.name, new Buffer(info.song.name));
 
                 /*
                 iconv = require 'iconv-lite'
@@ -462,17 +490,13 @@
                  */
                 id3Writer.setTag('TIT2', info.song.name);
               }
-              console.log(info);
-              console.log(info.track.id, Config.id3.hasTrack);
               if (Config.id3.hasTrack && info.track.id) {
                 id3Writer.setTag('TRCK', info.track.id);
               }
               if (Config.id3.hasYear && info.source.year) {
                 id3Writer.setTag('TYER', info.source.year);
               }
-              console.log(Config.id3.hasCover, result.resizeImage);
               if (Config.id3.hasCover && (image = result.resizeImage)) {
-                console.log('APIC', image);
                 id3Writer.setTag('APIC', image);
               }
               if (Config.id3.hasGenre && info.source.style) {
@@ -538,28 +562,34 @@
                       switch (res.statusCode) {
                         case 200:
                           contentLength = Number(res.headers['content-length']);
-                          transportStream = function() {
+                          transportStream = function(suffix) {
                             var check, f;
-                            f = fs.createWriteStream("" + savePath + ".download", {
+                            f = fs.createWriteStream(path.resolve(pathFolder, "" + info.song.id + ".download"), {
                               flags: 'a',
                               encoding: null,
                               mode: 0x1b6
                             });
                             f.on('finish', function() {
-                              return fs.rename("" + savePath + ".download", "" + savePath + ".mp3", function() {
+                              return fs.rename(path.resolve(pathFolder, "" + info.song.id + ".download"), "" + (savePath + (suffix ? ' ' + suffix : '')) + ".mp3", function(err) {
                                 var _base;
-                                window.count++;
-                                if (typeof (_base = window.win).setBadgeLabel === "function") {
-                                  _base.setBadgeLabel(window.count);
+                                if (!err) {
+                                  window.count++;
+                                  if (typeof (_base = window.win).setBadgeLabel === "function") {
+                                    _base.setBadgeLabel(window.count);
+                                  }
                                 }
                                 return $scope.$apply(function() {
-                                  return cb(null);
+                                  info.process = 100;
+                                  return cb(err);
                                 });
                               });
                             });
                             f.on('error', function(err) {
                               console.error(err);
-                              return cb(err);
+                              return $scope.$apply(function() {
+                                info.process = 100;
+                                return cb(err);
+                              });
                             });
                             check = (function(timeout) {
                               var count, lastBytes;
@@ -568,9 +598,11 @@
                               return function() {
                                 var nowBytes;
                                 nowBytes = f.bytesWritten;
-                                $scope.$apply(function() {
-                                  return info.process = nowBytes / contentLength * 100;
-                                });
+                                if (info.state === State.Running) {
+                                  $scope.$apply(function() {
+                                    return info.process = nowBytes / contentLength * 100;
+                                  });
+                                }
                                 if (info.process >= 100) {
                                   return f.end();
                                 } else {
@@ -595,16 +627,32 @@
                               if (err) {
                                 return cb(err);
                               } else {
-                                if (stat.size >= contentLength + id3Size) {
-                                  return fs.unlink("" + savePath + ".download", function(err) {
-                                    if (err) {
-                                      return cb(err);
+                                switch (Config.fileExistSolution) {
+                                  case 'alwaysCover':
+                                    return transportStream();
+                                  case 'alwaysSkip':
+                                    return fs.unlink(path.resolve(pathFolder, "" + info.song.id + ".download"), function(err) {
+                                      if (err) {
+                                        return cb(err);
+                                      } else {
+                                        return cb(new Error('文件已存在'));
+                                      }
+                                    });
+                                  case 'coverSmallFile':
+                                    if (stat.size >= contentLength + id3Size) {
+                                      return fs.unlink(path.resolve(pathFolder, "" + info.song.id + ".download"), function(err) {
+                                        if (err) {
+                                          return cb(err);
+                                        } else {
+                                          return cb(new Error('文件已存在'));
+                                        }
+                                      });
                                     } else {
-                                      return cb(new Error('文件已存在'));
+                                      return transportStream();
                                     }
-                                  });
-                                } else {
-                                  return transportStream();
+                                    break;
+                                  case 'filenameTimestamp':
+                                    return transportStream(timestamp);
                                 }
                               }
                             });
@@ -704,6 +752,7 @@
         var uri;
         switch (item.type) {
           case 'user':
+          case 'artist':
             return cb(null, {});
           case 'playlist':
             uri = 'http://www.xiami.com/song/playlist-default/cat/json';
@@ -931,7 +980,7 @@
                   });
                   songs = (function() {
                     var _i, _len, _ref, _results;
-                    _ref = $('a[href^="http://www.xiami.com/song/"]');
+                    _ref = $('a[href*="/song/"]');
                     _results = [];
                     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
                       i = _ref[_i];
@@ -939,6 +988,7 @@
                     }
                     return _results;
                   })();
+                  console.log(songs, body);
                   return cb(null, songs);
                 } else {
                   return cb(error);
@@ -949,38 +999,56 @@
               if (_.isArray(songs[0])) {
                 songs = _.union.apply(null, songs);
               }
-              return async.map(songs, function(songId, cb) {
-                return common.get("http://www.xiami.com/song/playlist/id/" + songId + "/type/" + type['song'] + "/cat/json", function(error, response, body) {
-                  var song, trackList, _i, _len, _ref, _ref1, _ref2, _results;
-                  if (!error && response.statusCode === 200) {
-                    console.log(body);
-                    if (trackList = (_ref = body != null ? (_ref1 = body.data) != null ? _ref1.trackList : void 0 : void 0) != null ? _ref : body != null ? (_ref2 = body.album) != null ? _ref2.songs : void 0 : void 0) {
-                      _results = [];
-                      for (_i = 0, _len = trackList.length; _i < _len; _i++) {
-                        song = trackList[_i];
-                        _results.push(cb(null, parseInfoFromAPI(song)));
-                      }
-                      return _results;
-                    } else {
-                      return cb(null, void 0);
+              songs = _.uniq(songs);
+              return common.get("http://www.xiami.com/song/playlist/id/" + (songs.join(',')) + "/type/" + type['song'] + "/cat/json", function(error, response, body) {
+                var list, result, song, trackList, _i, _len, _ref, _ref1, _ref2;
+                if (!error && response.statusCode === 200) {
+                  list = [];
+                  if (trackList = (_ref = body != null ? (_ref1 = body.data) != null ? _ref1.trackList : void 0 : void 0) != null ? _ref : body != null ? (_ref2 = body.album) != null ? _ref2.songs : void 0 : void 0) {
+                    for (_i = 0, _len = trackList.length; _i < _len; _i++) {
+                      song = trackList[_i];
+                      list.push(parseInfoFromAPI(song));
                     }
+                    result = {
+                      'name': "用户UID" + item.id + "的第" + (item.start + (item.end && item.end !== item.start ? '至' + item.end : '')) + "页收藏",
+                      'type': item.type,
+                      'id': item.id,
+                      'start': item.start,
+                      'end': item.end,
+                      'list': list
+                    };
+                    return cb(null, result);
                   } else {
-                    return cb(error, response);
+                    return cb(null, void 0);
                   }
-                });
-              }, function(err, list) {
-                var result;
-                result = {
-                  'name': "用户" + item.id + "的第" + item.start + "到" + item.end + "页收藏",
-                  'type': item.type,
-                  'id': item.id,
-                  'start': item.start,
-                  'end': item.end,
-                  'list': list
-                };
-                console.log(result, err, 'when user');
-                return cb(err, result);
+                } else {
+                  return cb(error, response);
+                }
               });
+
+              /*
+              async.map songs, (songId, cb)->
+                  common.get "http://www.xiami.com/song/playlist/id/#{songId}/type/#{type['song']}/cat/json", (error, response, body)->
+                      if not error and response.statusCode is 200
+                          console.log body
+                          if trackList = body?.data?.trackList ? body?.album?.songs # web: trackList    android: songs
+                              for song in trackList  
+                                  cb null, parseInfoFromAPI song
+                          else
+                              cb null, undefined
+                      else
+                          cb error, response
+              , (err, list)->
+                  result =
+                      'name': "用户#{item.id}的第#{item.start}到#{item.end}页收藏"
+                      'type': item.type
+                      'id': item.id
+                      'start': item.start
+                      'end': item.end
+                      'list': list
+                  console.log result, err, 'when user'
+                  cb err, result
+               */
             });
           case 'album':
 
@@ -1029,23 +1097,79 @@
                         'url': pictureUrl
              */
           case 'artist':
-
-            /*
-            request "http://www.xiami.com/artist/#{item.id}", proxy: common.getProxyString(), (error, response, body)->
-             */
             return common.get("http://www.xiami.com/artist/" + item.id, function(error, response, body) {
-              var $, name, pictureUrl, _ref;
+              var $, artistName, pictureUrl, _ref;
               if (!error && response.statusCode === 200) {
                 $ = cheerio.load(body, {
                   ignoreWhitespace: true
                 });
-                name = common.replaceLast($('#title h1').text(), $('#title h1').children().text(), '');
+                artistName = common.replaceLast($('#title h1').text(), $('#title h1').children().text(), '');
                 pictureUrl = (_ref = $('#artist_photo a img').attr('src')) != null ? _ref.replace(/_\d\.jpg/, '.jpg') : void 0;
-                return cb(null, {
-                  'name': name,
-                  'cover': {
-                    'url': pictureUrl
+                urls = (function() {
+                  var _i, _ref1, _ref2, _results;
+                  _results = [];
+                  for (i = _i = _ref1 = item.start, _ref2 = item.end; _ref1 <= _ref2 ? _i <= _ref2 : _i >= _ref2; i = _ref1 <= _ref2 ? ++_i : --_i) {
+                    _results.push("http://www.xiami.com/artist/top/id/" + item.id + "/page/" + i);
                   }
+                  return _results;
+                })();
+                return async.map(urls, function(uri, cb) {
+                  console.log(uri);
+                  return common.get(uri, function(error, response, body) {
+                    var songs;
+                    if (!error && response.statusCode === 200) {
+                      $ = cheerio.load(body, {
+                        ignoreWhitespace: true
+                      });
+                      songs = (function() {
+                        var _i, _len, _ref1, _results;
+                        _ref1 = $('a[href*="/song/"]');
+                        _results = [];
+                        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+                          i = _ref1[_i];
+                          _results.push($(i).attr('href').match(/song\/(\d+)/)[1]);
+                        }
+                        return _results;
+                      })();
+                      return cb(null, songs);
+                    } else {
+                      return cb(error);
+                    }
+                  });
+                }, function(err, songs) {
+                  console.log(songs, urls);
+                  if (_.isArray(songs[0])) {
+                    songs = _.union.apply(null, songs);
+                  }
+                  songs = _.uniq(songs);
+                  return common.get("http://www.xiami.com/song/playlist/id/" + (songs.join(',')) + "/type/" + type['song'] + "/cat/json", function(error, response, body) {
+                    var list, result, song, trackList, _i, _len, _ref1, _ref2, _ref3;
+                    if (!error && response.statusCode === 200) {
+                      list = [];
+                      if (trackList = (_ref1 = body != null ? (_ref2 = body.data) != null ? _ref2.trackList : void 0 : void 0) != null ? _ref1 : body != null ? (_ref3 = body.album) != null ? _ref3.songs : void 0 : void 0) {
+                        for (_i = 0, _len = trackList.length; _i < _len; _i++) {
+                          song = trackList[_i];
+                          list.push(parseInfoFromAPI(song));
+                        }
+                        result = common.mixin(result, {
+                          'name': "艺人" + artistName + "的第" + (item.start + (item.end && item.end !== item.start ? '至' + item.end : '')) + "页热门歌曲",
+                          'type': item.type,
+                          'id': item.id,
+                          'start': item.start,
+                          'end': item.end,
+                          'list': list,
+                          'cover': {
+                            'url': pictureUrl
+                          }
+                        });
+                        return cb(null, result);
+                      } else {
+                        return cb(null, void 0);
+                      }
+                    } else {
+                      return cb(error, response);
+                    }
+                  });
                 });
               } else {
                 return cb(error, response.statusCode, response);
@@ -1082,7 +1206,7 @@
       });
     };
     $scope.checkAll = function(i) {
-      var task, track, _i, _j, _len, _len1, _ref, _ref1, _results, _results1;
+      var list, task, track, _i, _j, _len, _len1, _ref, _ref1, _results, _results1;
       task = $scope.data[i];
       if (task.checkAll) {
         _ref = $scope.data[i].list;
@@ -1093,11 +1217,12 @@
         }
         return _results;
       } else {
+        list = angular.copy(task.list);
         _ref1 = $scope.data[i].list;
         _results1 = [];
         for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
           track = _ref1[_j];
-          _results1.push($scope.data[i].checked = angular.copy(task.list));
+          _results1.push($scope.data[i].checked = list);
         }
         return _results1;
       }
@@ -1192,7 +1317,7 @@
         var result;
         console.log('analyze2');
         result = _.map(links, function(text) {
-          var album, artist, collect, playlist, showcollect, song, user, _ref;
+          var album, artist, collect, playlist, showcollect, song, user, _ref, _ref1, _ref2, _ref3;
           if (validator.isURL(text)) {
             artist = common.isArtist.exec(text);
             song = common.isSong.exec(text);
@@ -1224,14 +1349,16 @@
             } else if (artist) {
               return {
                 type: 'artist',
-                id: artist[1]
+                id: artist[1],
+                start: Number((_ref = artist[2]) != null ? _ref : 1),
+                end: Number((_ref1 = (_ref2 = artist[3]) != null ? _ref2 : artist[2]) != null ? _ref1 : 1)
               };
             } else if (user) {
               return {
                 type: 'user',
                 id: user[1],
                 start: Number(user[2]),
-                end: Number((_ref = user[3]) != null ? _ref : user[2])
+                end: Number((_ref3 = user[3]) != null ? _ref3 : user[2])
               };
             } else if (playlist && User.logged) {
               return {
@@ -1418,6 +1545,7 @@
           return common.get('https://login.xiami.com/member/login' != null ? 'https://login.xiami.com/member/login' : 'http://www.xiami.com/member/login', cb);
         }, function(response, body, cb) {
           var $, data, field, fields, img, name, value, _i, _len, _ref, _ref1;
+          console.log(response, body);
           if (response.statusCode === 200) {
             $ = cheerio.load(body, {
               ignoreWhitespace: true
@@ -1455,6 +1583,7 @@
             });
           }
           formData = data;
+          console.log(formData);
           return cb(null, data);
         }
       ], function(err, result) {
@@ -1476,7 +1605,7 @@
             delete User[i];
           }
           User.logged = false;
-          $scope.loginPageLoad();
+          common.loadLoginPage();
           return $scope.loginFormInit();
         });
       });
@@ -1532,28 +1661,26 @@
         });
       });
     };
-    $scope.loginPageLoad = function() {
-      var iframe, iframeUrl;
-      iframe = document.querySelector('iframe.loginPage');
-      iframe.nwUserAgent = Config.headers['User-Agent'];
-      iframeUrl = url.parse(iframe.contentDocument.URL);
-      if (iframeUrl.href === 'http://www.xiami.com/') {
-        return require('nw.gui').Window.get().cookies.getAll({
-          domain: '.xiami.com'
-        }, function(cookies) {
-          Config.cookie = (function() {
-            var i, ret, _i, _len;
-            ret = '';
-            for (_i = 0, _len = cookies.length; _i < _len; _i++) {
-              i = cookies[_i];
-              ret += "" + i.name + "=" + i.value + "; ";
-            }
-            return ret;
-          })();
-          return $scope.$apply(setLogged);
-        });
-      }
-    };
+
+    /*
+    $scope.loginPageLoad = ->
+        iframe = document.querySelector 'iframe.loginPage'
+        iframe.nwUserAgent = Config.headers['User-Agent']
+        iframeUrl = url.parse iframe.contentDocument.URL
+         *console.log iframeUrl, iframe.contentDocument.cookie
+        if iframeUrl.href is 'http://www.xiami.com/'
+            require('nw.gui').Window.get().cookies.getAll
+                    domain: '.xiami.com'
+                ,(cookies)->
+                     * console.log cookies
+                    Config.cookie = (->
+                        ret = ''
+                        for i in cookies
+                            ret += "#{i.name}=#{i.value}; "
+                        ret
+                    )()
+                    $scope.$apply setLogged
+     */
     $scope.loginByCookie = function() {
       Config.cookie = $scope.cookie;
       return setLogged();
@@ -1644,20 +1771,18 @@
       });
     };
     return _.defer(function() {
-      var pCookie;
       $scope.loginFormInit();
-      window.setLogged = setLogged;
-      pCookie = Promise.all([$localForage.getItem('config.jar'), $localForage.getItem('config.cookie')]);
-      return pCookie.then(function(_arg) {
-        var cookie, jar;
-        jar = _arg[0], cookie = _arg[1];
-        console.log(jar, cookie);
-        if (_.isString(cookie)) {
-          Config.cookie = cookie;
-        }
-        consolo.log(Config.jar, Config.cookie);
-        return setLogged();
-      });
+      return window.setLogged = setLogged;
+
+      /*
+      pCookie = Promise.all [$localForage.getItem('config.jar'), $localForage.getItem('config.cookie')]
+      pCookie.then ([jar, cookie])->
+          console.log jar, cookie
+           * Config.jar = jar if _.isObject jar
+          Config.cookie = cookie if _.isString cookie
+          consolo.log Config.jar, Config.cookie
+          setLogged()
+       */
     });
   });
 

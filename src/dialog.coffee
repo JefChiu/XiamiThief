@@ -33,7 +33,7 @@ http.globalAgent.maxSockets = Infinity
 App.factory 'Config',->
     common.config
 
-App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
+App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)->
     type =
         song: 0
         album: 1
@@ -178,6 +178,8 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
         mkdirp pathFolder, (err)->
             if not err
                 savePath = path.resolve pathFolder, filename
+                
+                timestamp = new Date().getTime()
 
                 coverDownload = (cb)->
                     coverPath = path.resolve pathFolder, "#{info.album.id}.jpg"
@@ -355,24 +357,46 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
                     if (Config.hasLyric or (Config.hasId3 and Config.id3.hasLyric)) and info.lyric.url
                         # console.log 'lyricDownload is true'
                         if Config.hasLyric
-                            f = fs.createWriteStream "#{savePath}.lrc"
-                            f.on 'finish', ->
-                                if Config.hasId3 and Config.id3.hasLyric
-                                    fs.readFile "#{savePath}.lrc", (err, data)->
-                                        cb err, data.toString()
+                            
+                            fs.exists "#{savePath}.lrc", (exist)->
+                                transportStream = (suffix)->
+                                    lrcFilename = "#{savePath + if suffix then ' ' + suffix else ''}.lrc"
+                                    f = fs.createWriteStream lrcFilename
+
+                                    f.on 'finish', ->
+                                        if Config.hasId3 and Config.id3.hasLyric
+                                            fs.readFile lrcFilename, (err, data)->
+                                                cb err, data.toString()
+                                        else
+                                            cb null
+                                    f.on 'error', (err)->
+                                        cb err
+                                    req = common.get info.lyric.url
+                                    req.pipe f
+                                    ###
+                                    request(info.lyric.url,
+                                        jar: false
+                                        headers: {}
+                                        proxy: common.getProxyString()
+                                    ).pipe f
+                                    ###
+                                    
+                                if exist
+                                    fs.stat "#{savePath}.lrc", (stat)->
+                                        switch Config.fileExistSolution
+                                            when 'alwaysCover'
+                                                transportStream()
+                                            when 'alwaysSkip'
+                                                return cb null
+                                            when 'coverSmallFile'
+                                                if stat.size >= contentLength + id3Size
+                                                    return cb null
+                                                else
+                                                    transportStream()
+                                            when 'filenameTimestamp'
+                                                transportStream(timestamp)
                                 else
-                                    cb null
-                            f.on 'error', (err)->
-                                cb err
-                            req = common.get info.lyric.url
-                            req.pipe f
-                            ###
-                            request(info.lyric.url,
-                                jar: false
-                                headers: {}
-                                proxy: common.getProxyString()
-                            ).pipe f
-                            ###
+                                    transportStream()
                         else
                             common.get info.lyric.url, (error, response, body)->
                                 cb error, body
@@ -393,7 +417,9 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
                     # console.log 'writeId3Info'
                     if Config.hasId3
                         # console.log 'writeId3Info is true'
-                        id3Writer = new id3v23 "#{savePath}.download"
+                        
+                        id3Writer = new id3v23 path.resolve pathFolder, "#{info.song.id}.download"
+                        
                         # TALB 专辑名
                         if Config.id3.hasAlbum and info.album.name
                             id3Writer.setTag 'TALB', info.album.name
@@ -405,10 +431,11 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
                         # TPE2 专辑艺术家/乐队
                         if Config.id3.hasAlbumArtist and info.album.artist
                             id3Writer.setTag 'TPE2', info.album.artist
+                            
+                        console.log info.artist.name, info.album.artist
 
                         # TIT2 歌名
                         if Config.id3.hasTitle and info.song.name
-                            console.log info.song.name, new Buffer info.song.name
                             ###
                             iconv = require 'iconv-lite'
                             t = iconv.decode info.song.name, 'utf8'
@@ -418,8 +445,6 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
                             id3Writer.setTag 'TIT2', info.song.name #info.song.name
 
                         # TRCK 音轨号
-                        console.log info
-                        console.log info.track.id, Config.id3.hasTrack
                         if Config.id3.hasTrack and info.track.id
                             id3Writer.setTag 'TRCK', info.track.id
 
@@ -428,9 +453,7 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
                             id3Writer.setTag 'TYER', info.source.year
 
                         # APIC 专辑封面
-                        console.log Config.id3.hasCover, result.resizeImage
                         if Config.id3.hasCover and image = result.resizeImage
-                            console.log 'APIC', image
                             id3Writer.setTag 'APIC', image
 
                         # TCON 音乐类型(流派)
@@ -491,23 +514,26 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
                                         switch res.statusCode
                                             when 200
                                                 contentLength = Number res.headers['content-length']
-                                                transportStream = ->
-                                                    f = fs.createWriteStream "#{savePath}.download",
+                                                transportStream = (suffix)->
+                                                    f = fs.createWriteStream path.resolve(pathFolder, "#{info.song.id}.download"),
                                                         flags: 'a'
                                                         encoding: null
                                                         mode: 0o666
 
                                                     f.on 'finish', ->
-                                                        fs.rename "#{savePath}.download", "#{savePath}.mp3", ->
-                                                            window.count++
-                                                            window.win.setBadgeLabel? window.count # only OSX and Windows, 0.10.0-rc1 new feature
-
+                                                        fs.rename path.resolve(pathFolder, "#{info.song.id}.download"), "#{savePath + if suffix then ' ' + suffix else ''}.mp3", (err)->
+                                                            if not err
+                                                                window.count++
+                                                                window.win.setBadgeLabel? window.count # only OSX and Windows, 0.10.0-rc1 new feature
                                                             $scope.$apply ->
-                                                                cb null
+                                                                info.process = 100
+                                                                cb err
 
                                                     f.on 'error', (err)->
                                                         console.error err
-                                                        cb err
+                                                        $scope.$apply ->
+                                                            info.process = 100
+                                                            cb err
 
                                                     check = ((timeout)->
                                                         count = 0
@@ -515,8 +541,10 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
 
                                                         ->
                                                             nowBytes = f.bytesWritten
-                                                            $scope.$apply ->
-                                                                info.process = nowBytes / contentLength * 100
+                                                            if info.state is State.Running
+                                                                $scope.$apply ->
+                                                                    info.process = nowBytes / contentLength * 100
+                                                                
                                                             if info.process >= 100
                                                                 f.end()
                                                             else
@@ -540,14 +568,26 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
                                                         if err
                                                             cb err
                                                         else
-                                                            if stat.size >= contentLength + id3Size
-                                                                fs.unlink "#{savePath}.download", (err)->
-                                                                    if err
-                                                                        cb err
+                                                            switch Config.fileExistSolution
+                                                                when 'alwaysCover'
+                                                                    transportStream()
+                                                                when 'alwaysSkip'
+                                                                    fs.unlink path.resolve(pathFolder, "#{info.song.id}.download"), (err)->
+                                                                        if err
+                                                                            cb err
+                                                                        else
+                                                                            cb new Error '文件已存在'
+                                                                when 'coverSmallFile'
+                                                                    if stat.size >= contentLength + id3Size
+                                                                        fs.unlink path.resolve(pathFolder, "#{info.song.id}.download"), (err)->
+                                                                            if err
+                                                                                cb err
+                                                                            else
+                                                                                cb new Error '文件已存在'
                                                                     else
-                                                                        cb new Error '文件已存在'
-                                                            else
-                                                                transportStream()
+                                                                        transportStream()
+                                                                when 'filenameTimestamp'
+                                                                    transportStream(timestamp)
                                                 else
                                                     transportStream()
                                             when 302
@@ -618,7 +658,7 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
         getInfoFromAPI = (cb)->
             # "http://www.xiami.com/app/xiating/album?id=#{item.id}" HTML
             switch item.type
-                when 'user'
+                when 'user', 'artist'
                     return cb null, {}
                 when 'playlist'
                     uri = 'http://www.xiami.com/song/playlist-default/cat/json'
@@ -786,7 +826,8 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
                         common.get uri, (error, response, body)->
                             if not error and response.statusCode is 200
                                 $ = cheerio.load body, ignoreWhitespace: true
-                                songs = ($(i).attr('href').match(/song\/(\d+)/)[1] for i in $('a[href^="http://www.xiami.com/song/"]'))
+                                songs = ($(i).attr('href').match(/song\/(\d+)/)[1] for i in $('a[href*="/song/"]'))
+                                console.log songs, body
                                 cb null, songs
                             else
                                 cb error
@@ -794,6 +835,26 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
                         console.log songs
                         if _.isArray songs[0]
                             songs = _.union.apply null, songs
+                        songs = _.uniq songs
+                        common.get "http://www.xiami.com/song/playlist/id/#{songs.join ','}/type/#{type['song']}/cat/json", (error, response, body)->
+                            if not error and response.statusCode is 200
+                                list = []
+                                if trackList = body?.data?.trackList ? body?.album?.songs # web: trackList    android: songs
+                                    for song in trackList  
+                                        list.push parseInfoFromAPI song
+                                    result =
+                                        'name': "用户UID#{item.id}的第#{ item.start + if item.end and item.end isnt item.start then '至' + item.end else '' }页收藏"
+                                        'type': item.type
+                                        'id': item.id
+                                        'start': item.start
+                                        'end': item.end
+                                        'list': list
+                                    cb null, result
+                                else
+                                    cb null, undefined
+                            else
+                                cb error, response
+                        ###
                         async.map songs, (songId, cb)->
                             common.get "http://www.xiami.com/song/playlist/id/#{songId}/type/#{type['song']}/cat/json", (error, response, body)->
                                 if not error and response.statusCode is 200
@@ -815,6 +876,7 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
                                 'list': list
                             console.log result, err, 'when user'
                             cb err, result
+                        ###
                 when 'album'
                     ###
                     request "http://www.xiami.com/album/#{item.id}", proxy: common.getProxyString(), (error, response, body) ->
@@ -852,20 +914,49 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
                                 'url': pictureUrl
                     ###
                 when 'artist'
-                    ###
-                    request "http://www.xiami.com/artist/#{item.id}", proxy: common.getProxyString(), (error, response, body)->
-                    ###
-                    common.get "http://www.xiami.com/artist/#{item.id}", (error, response, body)->
-                        if not error and response.statusCode is 200
-                            $ = cheerio.load body, ignoreWhitespace:true
-                            name = common.replaceLast $('#title h1').text(), $('#title h1').children().text(), ''
-                            pictureUrl = $('#artist_photo a img').attr('src')?.replace(/_\d\.jpg/, '.jpg')# 从小图Url获得大图Url
-                            cb null,
-                                'name': name
-                                'cover':
-                                    'url': pictureUrl
-                        else
-                            cb error, response.statusCode, response
+                        common.get "http://www.xiami.com/artist/#{item.id}", (error, response, body)->
+                            if not error and response.statusCode is 200
+                                $ = cheerio.load body, ignoreWhitespace:true
+                                artistName = common.replaceLast $('#title h1').text(), $('#title h1').children().text(), ''
+                                pictureUrl = $('#artist_photo a img').attr('src')?.replace(/_\d\.jpg/, '.jpg')# 从小图Url获得大图Url
+                                
+                                urls = ("http://www.xiami.com/artist/top/id/#{item.id}/page/#{i}" for i in [item.start..item.end])
+                                async.map urls, (uri, cb)->
+                                    console.log uri
+                                    common.get uri, (error, response, body)->
+                                        if not error and response.statusCode is 200
+                                            $ = cheerio.load body, ignoreWhitespace: true
+                                            songs = ($(i).attr('href').match(/song\/(\d+)/)[1] for i in $('a[href*="/song/"]'))
+                                            cb null, songs
+                                        else
+                                            cb error
+                                , (err, songs)->
+                                    console.log songs, urls
+                                    if _.isArray songs[0]
+                                        songs = _.union.apply null, songs
+                                    songs = _.uniq songs
+                                    common.get "http://www.xiami.com/song/playlist/id/#{songs.join ','}/type/#{type['song']}/cat/json", (error, response, body)->
+                                        if not error and response.statusCode is 200
+                                            list = []
+                                            if trackList = body?.data?.trackList ? body?.album?.songs # web: trackList    android: songs
+                                                for song in trackList  
+                                                    list.push parseInfoFromAPI song
+                                                result = common.mixin result,
+                                                    'name': "艺人#{artistName}的第#{ item.start + if item.end and item.end isnt item.start then '至' + item.end else '' }页热门歌曲"
+                                                    'type': item.type
+                                                    'id': item.id
+                                                    'start': item.start
+                                                    'end': item.end
+                                                    'list': list
+                                                    'cover':
+                                                        'url': pictureUrl
+                                                cb null, result
+                                            else
+                                                cb null, undefined
+                                        else
+                                            cb error, response
+                            else
+                                cb error, response.statusCode, response
                 when 'playlist'
                     cb null, 'name': '播放列表' + item.id
                 else
@@ -895,8 +986,10 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
             for track in $scope.data[i].list
                 $scope.data[i].checked = []
         else
+            list = angular.copy task.list
             for track in $scope.data[i].list
-                $scope.data[i].checked = angular.copy task.list
+                $scope.data[i].checked = list
+                # $scope.data[i].checked = angular.copy task.list
         ###
         if task.checkAll
             for track in task.list
@@ -998,6 +1091,8 @@ App.controller 'CreateCtrl',($scope, $interval, TaskQueue, Config, User)->
                     else if artist
                         type: 'artist'
                         id: artist[1]
+                        start: Number artist[2] ? 1
+                        end: Number artist[3] ? artist[2] ? 1
                     else if user
                         type: 'user'
                         id: user[1]
@@ -1146,6 +1241,7 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
             (cb)->
                 common.get 'https://login.xiami.com/member/login' ? 'http://www.xiami.com/member/login', cb
             (response, body, cb) ->
+                console.log response, body
                 if response.statusCode is 200
                     $ = cheerio.load(body, ignoreWhitespace:true)
                     ###
@@ -1173,6 +1269,7 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
                     $scope.$apply ->
                         $scope.validateUrl = "validate.png?#{Math.random()}"
                 formData = data
+                console.log formData
                 cb null, data
         ], (err, result)->
             if err
@@ -1186,7 +1283,8 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
                 for i in Object.keys User
                     delete User[i]
                 User.logged = false
-                $scope.loginPageLoad()
+                # $scope.loginPageLoad()
+                common.loadLoginPage()
                 $scope.loginFormInit()
 
     $scope.sign = ->
@@ -1232,6 +1330,7 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
     
                     newWindow = null
 
+    ###
     $scope.loginPageLoad = ->
         iframe = document.querySelector 'iframe.loginPage'
         iframe.nwUserAgent = Config.headers['User-Agent']
@@ -1249,6 +1348,7 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
                         ret
                     )()
                     $scope.$apply setLogged
+    ###
 
     $scope.loginByCookie = ->
         Config.cookie = $scope.cookie
@@ -1330,7 +1430,8 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
         $scope.loginFormInit()
         
         window.setLogged = setLogged
-
+        
+        ###
         pCookie = Promise.all [$localForage.getItem('config.jar'), $localForage.getItem('config.cookie')]
         pCookie.then ([jar, cookie])->
             console.log jar, cookie
@@ -1338,5 +1439,6 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
             Config.cookie = cookie if _.isString cookie
             consolo.log Config.jar, Config.cookie
             setLogged()
+        ###
 
     # $scope.login End

@@ -2,9 +2,9 @@ doctype html
 html(lang='zh')
     head
         meta(charset='utf-8')
-        link(rel='stylesheet', href='../style/fonts.css')
-        link(rel='stylesheet', href='../style/main.css')
+        //link(rel='stylesheet', href='../style/fonts.css')
         link(rel='stylesheet', href='../style/material.css')
+        link(rel='stylesheet', href='../style/main.css')
         script.
             document.addEventListener('keyup', function(e){
                 if(e.keyCode === 123){ // F12
@@ -34,11 +34,8 @@ html(lang='zh')
         header
             .information(ng-controller='InfoCtrl')
                 .avatar(ng-style="{'background-image': user.avatar ? 'url(' + user.avatar + ')' : url('../r+esource/image/usr100.gif')}")
-                .username {{ user.name || '未登录' }}
+                //.username {{ user.name || '未登录' }}
         .main(ng-controller='TaskCtrl')
-            nav
-                .button-create(ng-click='showCreateDialog()')
-                .button-setup(ng-click='showSetupDialog()')
             //aside
                 ul
                     li 正在下载
@@ -48,13 +45,13 @@ html(lang='zh')
                 li(quick-ng-repeat='(taskIndex, task) in list', quick-repeat-list='tasks', ng-if='task', ng-hide='task.hide')
                     .task(
                         ng-click='task.expand = !task.expand',
-                        right-click='popupMenuTask($event, task)'
+                        right-click='popupMenuTask($event, task, taskIndex)'
                     )
                         img.cover(ng-src="{{ task.cover.url | picSize: 1}}", image-size='task.expand ? 100 : 55')
                         div(process='task.process', state='task.state')
                             span.type {{ task.type | type2name }}
                             span.name {{ task.name }}
-                        button.close(ng-click='removeTask(taskIndex)') 移除
+                        //button.close(ng-click='removeTask(taskIndex)') 移除
                     ul(ng-show='task.expand')
                         li.track(
                             ng-repeat='(trackIndex, track) in task.list',
@@ -93,14 +90,15 @@ html(lang='zh')
                 include create
             .setup(ng-controller='SetupCtrl')
                 include setup
-            .feedback
+            
+            //.feedback
                 .title 请写下您的意见和建议
                 textarea
                 button.submit 提交
-            .update(ng-controller='UpdateCtrl')
+            //.update(ng-controller='UpdateCtrl')
                 .content 未发现新版本
                 button(ng-click='check()') 检查更新
-            .about(ng-controller='AboutCtrl')
+            //.about(ng-controller='AboutCtrl')
                 include about
             .exit(ng-controller='ExitCtrl')
                 .title 是否退出?
@@ -109,7 +107,10 @@ html(lang='zh')
                     button.no(ng-click='hide()') 否
                     
         nav.control(ng-controller='ControlCtrl')
-            .button-menu(ng-click='popupMenuStart($event)')
+            //.button-menu(ng-click='popupMenuStart($event)')
             .button-minimize(ng-click='minimize()')
             .button-maximize(ng-class="{'button-restore': isMaximize}", ng-click='zoom()')
             .button-close(ng-click='close()')
+        nav.start(ng-controller='TaskCtrl')
+            .button-create(ng-click='showCreateDialog()') 新建任务
+            .button-setup(ng-click='showSetupDialog()') 软件设置

@@ -654,7 +654,7 @@
 
   App.controller('TaskCtrl', function($scope, TaskQueue, State, quickRepeatList) {
     var createMenuTask, createMenuTrack;
-    createMenuTask = function(info) {
+    createMenuTask = function(info, taskIndex) {
       var menu, menuItem;
       menu = new gui.Menu;
       menuItem = function(options) {
@@ -670,7 +670,7 @@
               link = "http://www.xiami.com/song/" + info.list[0].id;
               break;
             case 'album':
-              link = "http://www.xiami.com/album/" + info.id;
+              link = "http://www.xiami.com/album/top/id/" + info.id + "/page/" + info.start;
               break;
             case 'collect':
               link = "http://www.xiami.com/collect/" + info.id;
@@ -684,7 +684,14 @@
             default:
               link = "http://www.xiami.com/";
           }
-          return gui.Shell.openExternal(link);
+          return gui.Shell.openItem(link);
+        }
+      }));
+      menu.append(menuItem({
+        type: 'normal',
+        label: '移除此项',
+        click: function() {
+          return $scope.removeTask(taskIndex);
         }
       }));
       if (os.platform() === 'drawin' && version[1] >= 10) {
@@ -704,7 +711,7 @@
         click: function() {
           var _ref, _ref1;
           console.log(info, path.resolve(info != null ? (_ref = info.save) != null ? _ref.path : void 0 : void 0, info != null ? (_ref1 = info.save) != null ? _ref1.name : void 0 : void 0) + '.mp3');
-          return gui.Shell.openExternal('"' + path.resolve(info.save.path, info.save.name) + '.mp3' + '"');
+          return gui.Shell.openItem('"' + path.resolve(info.save.path, info.save.name) + '.mp3' + '"');
         }
       }));
       menu.append(menuItem({
@@ -713,7 +720,7 @@
         click: function() {
           var _ref;
           console.log(info, info != null ? (_ref = info.save) != null ? _ref.path : void 0 : void 0);
-          return gui.Shell.openExternal('"' + info.save.path + '"');
+          return gui.Shell.openItem('"' + info.save.path + '"');
         }
       }));
       menu.append(menuItem({
@@ -723,7 +730,7 @@
         type: 'normal',
         label: '在虾米音乐网打开',
         click: function() {
-          return gui.Shell.openExternal("http://www.xiami.com/song/" + info.song.id);
+          return gui.Shell.openItem("http://www.xiami.com/song/" + info.song.id);
         }
       }));
       menu.append(menuItem({
@@ -775,9 +782,9 @@
         return false;
       }
     };
-    $scope.popupMenuTask = function($event, info) {
+    $scope.popupMenuTask = function($event, info, taskIndex) {
       var menuTask;
-      menuTask = createMenuTask(info);
+      menuTask = createMenuTask(info, taskIndex);
       return menuTask.popup($event.clientX, $event.clientY);
     };
     return $scope.popupMenuTrack = function($event, info) {

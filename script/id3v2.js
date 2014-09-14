@@ -1,6 +1,6 @@
 (function() {
   'use strict';
-  var async, bin, dec2bin, fs, hex, id3Writer, id3v23, isArray, prefixInteger, punycode, repeatString, split, validator;
+  var async, bin, dec2bin, fs, hex, id3Writer, id3v23, isArray, prefixInteger, punycode, repeatString, split, strFix, validator;
 
   fs = require('fs');
 
@@ -34,6 +34,19 @@
 
   isArray = function(input) {
     return typeof input === 'object' && input instanceof Array;
+  };
+
+  strFix = function(str) {
+    return new Buffer(Array.prototype.reduce.call(str, function(a, b) {
+      return a + b;
+    })).toString();
+
+    /*
+    if validator.isAscii str
+        punycode.ucs2.encode punycode.ucs2.decode str
+    else
+        str
+     */
   };
 
   hex = function(input) {
@@ -96,7 +109,7 @@
           Id + Size + Flags 共10个字节
           Size为帧的总大小-10, 即Data的大小
        */
-      var asciiCode, blankLength, bom, frame, frameData, frameFlags, frameId, frameSize, frames, isBuf, isLrc, isNum, isPic, tag, type, ucs2Code, value, _ref;
+      var blankLength, bom, frame, frameData, frameFlags, frameId, frameSize, frames, isBuf, isLrc, isNum, isPic, tag, type, value, _ref;
       frames = [];
       _ref = this.tags;
       for (tag in _ref) {
@@ -182,17 +195,7 @@
             frame.write(frameData, 10 + bom.length, frameData.length * 2, 'ucs2');
           } else {
             frame.write(bom, 10, bom.length, 'ascii');
-            if (validator.isAscii(frameData)) {
-              asciiCode = punycode.ucs2.decode(frameData);
-              ucs2Code = [];
-
-              /*
-              for i in asciiCode
-                  ucs2Code.push i, 0
-               */
-              ucs2Code = asciiCode;
-              frameData = punycode.ucs2.encode(ucs2Code);
-            }
+            frameData = strFix(frameData);
 
             /*
             _temp = new Buffer(frameData.length * 2)
@@ -202,7 +205,6 @@
             frame.write(frameData, 10 + bom.length, frameData.length * 2, 'ucs2');
           }
         }
-        console.log(frame);
         frames.push(frame);
       }
       return frames;

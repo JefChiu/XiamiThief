@@ -24,6 +24,16 @@ prefixInteger = (num, length)->
 
 isArray = (input)->
     typeof(input) is 'object' and input instanceof Array
+    
+strFix = (str)->
+    new Buffer(Array.prototype.reduce.call(str, (a,b) -> a + b)).toString()
+    # '\ufeff' + str
+    ###
+    if validator.isAscii str
+        punycode.ucs2.encode punycode.ucs2.decode str
+    else
+        str
+    ###
 
 hex = (input)->
     if isArray(input)
@@ -129,15 +139,7 @@ class id3v23
                 else
                     frame.write bom, 10, bom.length, 'ascii'
                     
-                    if validator.isAscii frameData
-                        asciiCode = punycode.ucs2.decode frameData
-                        ucs2Code = []
-                        ###
-                        for i in asciiCode
-                            ucs2Code.push i, 0
-                        ###
-                        ucs2Code = asciiCode
-                        frameData = punycode.ucs2.encode ucs2Code
+                    frameData = strFix frameData
                     
                     ###
                     _temp = new Buffer(frameData.length * 2)
@@ -146,8 +148,7 @@ class id3v23
                     ###
                     
                     frame.write frameData, 10 + bom.length, frameData.length * 2, 'ucs2'
-            console.log frame
-            frames.push(frame)
+            frames.push frame
         frames
     getSize:->
         frames = @getFrames()

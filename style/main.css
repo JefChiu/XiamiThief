@@ -1,3 +1,26 @@
+/*!
+ *  Fonts.css -- Cross-platform Chinese fonts solution
+ * 
+ *  Copyright (C) 2013-2014 Zeno Zeng
+ *  Released under the MIT license
+ * 
+ *  Github: https://github.com/zenozeng/fonts.css
+ */
+.font-hei {
+  font-family: "Helvetica Neue", Helvetica, "Nimbus Sans L", Arial, "Liberation Sans", "Hiragino Sans GB", "Microsoft YaHei", "Wenquanyi Micro Hei", "WenQuanYi Zen Hei", "ST Heiti", SimHei, "WenQuanYi Zen Hei Sharp", sans-serif;
+}
+.font-kai {
+  font-family: Baskerville, Georgia, "Liberation Serif", "Kaiti SC", STKaiti, "AR PL UKai CN", "AR PL UKai HK", "AR PL UKai TW", "AR PL UKai TW MBE", "AR PL KaitiM GB", KaiTi, KaiTi_GB2312, "TW\-Kai", serif;
+}
+.font-song {
+  font-family: Georgia, "Nimbus Roman No9 L", "Songti SC", STSong, "AR PL SungtiL GB", NSimSun, SimSun, "TW\-Sung", "WenQuanYi Bitmap Song", "AR PL UMing CN", "AR PL UMing HK", "AR PL UMing TW", "AR PL UMing TW MBE", serif;
+}
+.font-fang-song {
+  font-family: Baskerville, "Times New Roman", "Liberation Serif", STFangsong, FangSong, FangSong_GB2312, "CWTEX\-F", serif;
+}
+.font-ming {
+  font-family: Georgia, "Nimbus Roman No9 L", "AR PL UMing CN", "AR PL UMing HK", "AR PL UMing TW", "AR PL UMing TW MBE", PMingLiU, MingLiU, serif;
+}
 /*
 ::-webkit-scrollbar {
     width: 10px;
@@ -84,18 +107,20 @@ textarea {
   justify-content: center;
 }
 .no-flex {
-  -webkit-flex: none;
-  flex: none;
+  -webkit-flex: none !important;
+  flex: none !important;
 }
 .cover {
   background-image: url('../resource/image/cd100.gif');
   background-size: 100%;
 }
-.hq:before {
-  content: "高音质";
-  background-color: orange;
-  padding: 0 2px;
+/*
+.hq:before{
+    content: "高音质";
+    background-color: orange;
+    padding: 0 2px
 }
+*/
 #bg {
   position: absolute;
   top: 0;
@@ -105,16 +130,18 @@ textarea {
   z-index: -1;
 }
 .expand-up {
-  height: 20px;
-  width: 20px;
+  height: 10px;
+  width: 10px;
   display: inline-block;
   background-image: url('../resource/image/button_expand.png');
+  background-size: 100%;
 }
 .expand-down {
-  height: 20px;
-  width: 20px;
+  height: 10px;
+  width: 10px;
   display: inline-block;
   background-image: url('../resource/image/button_expand.png');
+  background-size: 100%;
   -webkit-transform: rotate(180deg);
 }
 body {
@@ -127,16 +154,18 @@ body {
   left: 0;
   height: 100%;
   width: 100%;
+  font-family: "Helvetica Neue", Helvetica, "Nimbus Sans L", Arial, "Liberation Sans", "Hiragino Sans GB", "Microsoft YaHei", "Wenquanyi Micro Hei", "WenQuanYi Zen Hei", "ST Heiti", SimHei, "WenQuanYi Zen Hei Sharp", sans-serif;
   /*
     background-image: url('../resource/image/kirito-sword-art-online-anime-hd-wallpaper-1920x1080-7732.jpg');
     background-attachment: fixed;
     background-size: auto 100%;
     */
-  font-size: 12px;
+  font-size: 14px;
   text-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
   -webkit-text-stroke: 1px transparent;
   -webkit-user-select: none;
   cursor: default;
+  border: 1px solid #777;
 }
 body > * {
   -webkit-flex: 1;
@@ -144,13 +173,10 @@ body > * {
 }
 body > header {
   -webkit-app-region: drag;
-  -webkit-flex: none;
-  flex: none;
+  -webkit-flex: none !important;
+  flex: none !important;
   background-color: #3f51b5;
   height: 80px;
-}
-label {
-  vertical-align: middle;
 }
 input,
 button {
@@ -169,8 +195,16 @@ input[type='radio'] {
   height: 15px;
   width: 15px;
 }
+input[type='checkbox'],
+input[type='radio'],
+input[type='checkbox'] + label,
+input[type='radio'] + label {
+  vertical-align: middle;
+}
 button {
+  margin: 10px 0;
   width: 85px;
+  font-family: "Helvetica Neue", Helvetica, "Nimbus Sans L", Arial, "Liberation Sans", "Hiragino Sans GB", "Microsoft YaHei", "Wenquanyi Micro Hei", "WenQuanYi Zen Hei", "ST Heiti", SimHei, "WenQuanYi Zen Hei Sharp", sans-serif;
 }
 iframe {
   background: initial;
@@ -190,8 +224,8 @@ iframe {
   flex: 1;
 }
 .information .avatar {
-  -webkit-flex: none;
-  flex: none;
+  -webkit-flex: none !important;
+  flex: none !important;
   background-image: url('../resource/image/usr100.gif');
   background-size: 100%;
   width: 50px;
@@ -249,6 +283,42 @@ nav.control .button-close {
 nav.control .button-close:hover {
   background-color: #e74c3c;
 }
+nav.start {
+  background-color: #3f51b5;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-flow: row;
+  flex-flow: row;
+  width: 40px;
+  color: white;
+  position: absolute;
+  right: calc(50% - 110px);
+  top: 40px;
+  -webkit-app-region: no-drag;
+  width: 220px;
+}
+nav.start > * {
+  -webkit-flex: 1;
+  flex: 1;
+}
+nav.start > * {
+  height: 40px;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
+  background-repeat: no-repeat;
+  background-position-y: 50%;
+  background-position-x: 10px;
+  line-height: 40px;
+  padding-left: 40px;
+}
+nav.start > *:hover {
+  background-color: #3498db;
+}
+nav.start .button-create {
+  background-image: url('../resource/image/button_create_white.png');
+}
+nav.start .button-setup {
+  background-image: url('../resource/image/button_setup_white.png');
+}
 .xp-font {
   font-family: SimSun;
 }
@@ -267,8 +337,8 @@ nav.control .button-close:hover {
   flex: 1;
 }
 .text > * {
-  -webkit-flex: none;
-  flex: none;
+  -webkit-flex: none !important;
+  flex: none !important;
 }
 /*
 ul.task{
@@ -335,12 +405,13 @@ ul.task{
   align-items: center;
   -webkit-justify-content: center;
   justify-content: center;
-  margin: 30px;
-  height: calc(100% - 60px);
-  width: calc(100% - 60px);
+  margin-top: 80px;
+  height: calc(100% - 80px);
+  width: 100%;
   background-color: white;
   display: none;
   color: black;
+  box-shadow: 0 -5px 50px rgba(0, 0, 0, 0.7);
 }
 .dialog > * > * {
   -webkit-flex: 1;
@@ -352,7 +423,24 @@ ul.task{
 .dialog h4,
 .dialog h5,
 .dialog h6 {
-  border-bottom: 1px solid black;
+  margin-top: 10px;
+  height: 40px;
+  -webkit-flex: none !important;
+  flex: none !important;
+}
+.dialog h1:after,
+.dialog h2:after,
+.dialog h3:after,
+.dialog h4:after,
+.dialog h5:after,
+.dialog h6:after {
+  -webkit-margin-end: 20px;
+  background-color: #eee;
+  content: ' ';
+  display: block;
+  height: 1px;
+  position: relative;
+  top: 5px;
 }
 .dialog form {
   display: -webkit-flex;
@@ -370,8 +458,8 @@ ul.task{
   background-color: rgba(255, 255, 255, 0.5);
 }
 .dialog .create > * {
-  -webkit-flex: none;
-  flex: none;
+  -webkit-flex: none !important;
+  flex: none !important;
   margin-top: 10px;
 }
 .dialog .create ul.list {
@@ -383,6 +471,8 @@ ul.task{
   width: 480px;
   overflow: auto;
   margin: 0;
+  padding-top: 10px;
+  margin-right: 10px;
 }
 .dialog .create ul.list span.type {
   color: orange;
@@ -409,8 +499,8 @@ ul.task{
   flex: 1;
 }
 .dialog .setup ul.list {
-  -webkit-flex: none;
-  flex: none;
+  -webkit-flex: none !important;
+  flex: none !important;
   width: 165px;
 }
 .dialog .setup ul.list li {
@@ -420,7 +510,7 @@ ul.task{
   text-align: center;
 }
 .dialog .setup ul.list li:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.5);
 }
 .dialog .setup ul.content {
   height: 100%;
@@ -438,16 +528,16 @@ ul.task{
   flex: 1;
 }
 .dialog .setup li.config form > * {
-  -webkit-flex: none;
-  flex: none;
+  -webkit-flex: none !important;
+  flex: none !important;
 }
 .dialog .update > * {
-  -webkit-flex: none;
-  flex: none;
+  -webkit-flex: none !important;
+  flex: none !important;
 }
 .dialog .feedback > * {
-  -webkit-flex: none;
-  flex: none;
+  -webkit-flex: none !important;
+  flex: none !important;
   margin-top: 10px;
 }
 .dialog .feedback textarea {
@@ -455,8 +545,8 @@ ul.task{
   height: 240px;
 }
 .dialog .exit > * {
-  -webkit-flex: none;
-  flex: none;
+  -webkit-flex: none !important;
+  flex: none !important;
 }
 .main {
   display: -webkit-flex;
@@ -471,8 +561,8 @@ ul.task{
 }
 .main aside {
   background-color: #3f51b5;
-  -webkit-flex: none;
-  flex: none;
+  -webkit-flex: none !important;
+  flex: none !important;
   width: 165px;
 }
 .main aside ul li {
@@ -499,6 +589,7 @@ ul.task{
   flex: 1;
 }
 .main > ul .task {
+  line-height: 55px;
   background-color: rgba(255, 255, 255, 0.5);
   display: -webkit-flex;
   display: flex;
@@ -515,20 +606,21 @@ ul.task{
   flex: 1;
 }
 .main > ul .task:not(:last-child) {
-  border-bottom: 1px solid black;
+  border-bottom: 1px solid #777;
 }
 .main > ul .task > * {
   display: block;
 }
 .main > ul .task img {
-  -webkit-flex: none;
-  flex: none;
+  -webkit-flex: none !important;
+  flex: none !important;
 }
 .main > ul .task span.type {
   margin-right: 5px;
 }
 .main > ul .track {
   font-size: 12px;
+  padding: 2px;
   /*
             line-height: 30px;
             height: 30px;
@@ -537,32 +629,10 @@ ul.task{
   background-repeat: no-repeat;
   background-size: 0% 40px;
 }
-.main nav {
-  background-color: #3f51b5;
-  -webkit-flex: none;
-  flex: none;
-  width: 40px;
-}
-.main nav > * {
-  width: 40px;
-  height: 40px;
-  text-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
-  background-repeat: no-repeat;
-  background-position: center;
-}
-.main nav > *:hover {
-  background-color: #3498db;
-}
-.main nav .button-create {
-  background-image: url('../resource/image/button_create_white.png');
-}
-.main nav .button-setup {
-  background-image: url('../resource/image/button_setup_white.png');
-}
 body > footer {
   -webkit-app-region: no-drag;
-  -webkit-flex: none;
-  flex: none;
+  -webkit-flex: none !important;
+  flex: none !important;
   background-color: rgba(0, 0, 0, 0.3);
   height: 32px;
 }
@@ -572,6 +642,10 @@ h3,
 h4,
 h5,
 h6 {
-  -webkit-flex: none;
-  flex: none;
+  -webkit-flex: none !important;
+  flex: none !important;
+}
+button.close {
+  flex: 0.1 !important;
+  margin-right: 10px;
 }
