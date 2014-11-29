@@ -1,12 +1,12 @@
 'use strict'
 
 gui = require 'nw.gui'
-pkg = require './package'
+pkg = require '../package'
 async = require 'async'
 os = require 'os'
 http = require 'http'
 https = require 'https'
-common = require './script/common'
+common = require '../script/common'
 ###
 request = (require 'request').defaults
     jar: true
@@ -24,8 +24,8 @@ path = require 'path'
 timers = require 'timers'
 mkdirp = require 'mkdirp'
 ent = require 'ent'
-{id3v23} = require './script/id3v2'
-genre = require './script/genre'
+{id3v23} = require '../script/id3v2'
+genre = require '../script/genre'
 validator = require 'validator'
 
 http.globalAgent.maxSockets = Infinity
@@ -176,13 +176,13 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
         filename = info.save.name
 
         mkdirp pathFolder, (err)->
-            if not err
+            unless err
                 savePath = path.resolve pathFolder, filename
                 
                 timestamp = new Date().getTime()
 
                 coverDownload = (cb)->
-                    coverPath = path.resolve pathFolder, "#{info.album.id}.jpg"
+                    coverPath = path.resolve pathFolder, "#{info.album.id}.#{info.cover.type ? 'jpg'}"
                     # console.log 'coverPath', coverPath
 
                     # console.log 'coverDownload'
@@ -210,43 +210,6 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                                 req.pipe f
                     else
                         cb null
-                    ###
-                    if Config.hasCover or (Config.hasId3 and Config.id3.hasCover)
-                        console.log 'coverDownload is true'
-                        fs.exists coverPath, (exists)->
-                            if exists
-                                if Config.hasId3 and Config.id3.hasCover
-                                    if Config.id3.cover.size is 'original'
-                                        fs.readFile coverPath, cb
-                                    else
-                                        resizeImage info.cover.url
-                                        #resizeImage coverPath
-                                else
-                                    cb null
-                            else
-                                if Config.hasCover
-                                    f = fs.createWriteStream coverPath
-                                    f.on 'finish', ->
-                                        if Config.hasId3 and Config.id3.hasCover
-                                            if Config.id3.cover.size is 'original'
-                                                fs.readFile coverPath, cb
-                                            else
-                                                resizeImage info.cover.url
-                                                #resizeImage coverPath
-                                        else
-                                            cb null
-                                    f.on 'error', (err)->
-                                        cb err
-                                    request(info.cover.url,
-                                        jar: false
-                                        headers: {}
-                                        proxy: common.getProxyString()
-                                    ).pipe f
-                                else
-                                    resizeImage info.cover.url
-                    else
-                        cb null
-                    ###
 
                 resizeImage = (cb)->
                     console.log Config.hasId3 and  Config.id3.hasCover
@@ -264,20 +227,6 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                             width = image.width
                             height = image.height
                             if height < maxSide and width < maxSide
-                                ###
-                                if imagePath[...4] is 'http'
-                                    f = fs.createWriteStream coverPath
-                                    f.on 'finish', ->
-                                        fs.readFile coverPath, cb
-                                    f.on 'error', cb
-                                    request(info.cover.url,
-                                        jar: false
-                                        headers: {}
-                                        proxy: common.getProxyString()
-                                    ).pipe f
-                                else
-                                    fs.readFile imagePath, cb
-                                ###
                                 canvas.height = image.height
                                 canvas.width = image.width
                             else if height > width
@@ -306,52 +255,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                         console.log image.src
                     else
                         cb null
-                ###
-                id3CoverPath = path.resolve pathFolder, "#{info.album.id}_#{maxSide}.jpg"
-                console.log 'id3CoverPath', id3CoverPath
-                fs.exists id3CoverPath, (exists)->
-                    if exists
-                        console.log 'exists'
-                        fs.readFile id3CoverPath, cb
-                    else
-                        console.log 'no-exists'
-                        image = new Image()
-                        image.addEventListener 'load', (e)->
-                            canvas = document.createElement 'canvas'
-                            ctx = canvas.getContext '2d'
-                            width = image.width
-                            height = image.height
-                            if height < maxSide and width < maxSide
-                                if imagePath[...4] is 'http'
-                                    f = fs.createWriteStream coverPath
-                                    f.on 'finish', ->
-                                        fs.readFile coverPath, cb
-                                    f.on 'error', cb
-                                    request(info.cover.url,
-                                        jar: false
-                                        headers: {}
-                                        proxy: common.getProxyString()
-                                    ).pipe f
-                                else
-                                    fs.readFile imagePath, cb
-                                return
-                            if height > width
-                                canvas.height = maxSide
-                                canvas.width = maxSide / height * width
-                            else
-                                canvas.width = maxSide
-                                canvas.height = maxSide / width * height
-                            ctx.drawImage image,
-                                0, 0,
-                                image.width, image.height,
-                                0, 0,
-                                canvas.width, canvas.height
-                            data = canvas.toDataURL('image/jpeg').replace 'data:image/jpeg;base64,', ''
-                            fs.writeFile id3CoverPath, data, encoding: 'base64', (err)->
-                                cb err, new Buffer(data, 'base64')
-                        image.src = if imagePath[...4] is 'http' then imagePath else "file:///#{imagePath}"
-                ###
-
+                
                 lyricDownload = (cb)->
                     # console.log 'lyricDownload'
                     if (Config.hasLyric or (Config.hasId3 and Config.id3.hasLyric)) and info.lyric.url
@@ -373,13 +277,6 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                                         cb err
                                     req = common.get info.lyric.url
                                     req.pipe f
-                                    ###
-                                    request(info.lyric.url,
-                                        jar: false
-                                        headers: {}
-                                        proxy: common.getProxyString()
-                                    ).pipe f
-                                    ###
                                     
                                 if exist
                                     fs.stat "#{savePath}.lrc", (stat)->
@@ -400,14 +297,6 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                         else
                             common.get info.lyric.url, (error, response, body)->
                                 cb error, body
-                            ###
-                            request info.lyric.url,
-                                jar: false
-                                headers: {}
-                                proxy: common.getProxyString()
-                                , (error, response, body)->
-                                    cb error, body
-                            ###
                     else
                         # console.log 'noLyric'
                         cb null
@@ -500,7 +389,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                             fs.exists "#{savePath}.mp3", (exists)->
                                 download = ->
                                     info.url.hq = location
-                                    req = http.get (->
+                                    req = http.get do ->
                                         if Config.useProxy is 'true'
                                             common.mixin url.parse(location),
                                                 agent: tunnel.httpsOverHttp
@@ -510,7 +399,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                                                         proxyAuth: "#{Config.proxy.username}:#{Config.proxy.password}"
                                         else
                                             location
-                                    )(), (res)->
+                                    , (res)->
                                         switch res.statusCode
                                             when 200
                                                 contentLength = Number res.headers['content-length']
@@ -522,7 +411,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
 
                                                     f.on 'finish', ->
                                                         fs.rename path.resolve(pathFolder, "#{info.song.id}.download"), "#{savePath + if suffix then ' ' + suffix else ''}.mp3", (err)->
-                                                            if not err
+                                                            unless err
                                                                 window.count++
                                                                 window.win.setBadgeLabel? window.count # only OSX and Windows, 0.10.0-rc1 new feature
                                                             $scope.$apply ->
@@ -616,8 +505,12 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                     cb err
             else
                 cb err
+                
+    logProgressText = (text)->
+        $scope.progressText = "#{text}\n"
 
     getInfo = (item, cb)->
+        logProgressText "开始获取#{common.type2name item.type}#{item.id}的信息"
         
         parseInfoFromAPI = (song)->
             songId = song.song_id
@@ -628,7 +521,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
             artistName = ent.decode song.artist ? song.singers # web: artist    android: singers
             artistId = song.artist_id
             lyricUrl = song.lyric if song.lyric?.indexOf('.lrc') isnt -1
-            pictureUrl = (song.pic ? song.album_logo)?.replace /_\d.jpg/, '.jpg'# 从小图Url获得大图Url web: pic    android: album_logo
+            pictureUrl = (song.pic ? song.album_logo)?.replace /_\d.([\w\d]+)$/, '.$1'# 从小图Url获得大图Url web: pic    android: album_logo
             trackId = song.track # android only
             discNum = song.cd_serial # android only
             cdCount = song.cd_count # android only
@@ -684,24 +577,15 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                     result =
                         type: item.type
                         id: item.id
-                        list: (->
+                        list: do ->
                             result = []
                             if trackList = body?.data?.trackList ? body?.album?.songs # web: trackList    android: songs
                                 for song in trackList
                                     result.push parseInfoFromAPI song
                             result
-                        )()
-                    ###
-                    if item.type isnt 'album' and
-                        (
-                            common.inStr(Config.filenameFormat, '%TRACK%') or
-                            (Config.saveMode isnt 'direct') or
-                            (Config.hasId3 and (Config.id3.hasTrack or Config.id3.hasDisc))
-                        )
-                    ###
                     cb null, result
                 else
-                    cb error, {}
+                    cb error ? response.statusCode, {}
         
         parseAlbumFromHTML = (html)->
             $ = cheerio.load html, ignoreWhitespace: true
@@ -743,12 +627,15 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
             result
             
         getTrackFromHTML = (result, cb)->
-            if  common.inStr(Config.filenameFormat, '%TRACK%') or
+            if common.inStr(Config.filenameFormat, '%TRACK%') or
             (Config.saveMode isnt 'direct') or
             (Config.hasId3 and (Config.id3.hasTrack or Config.id3.hasDisc))
-                console.log result
                 async.mapSeries result.list, (item, cb)->
+                        return cb null, item if +item.album.id is 0 # demo music no album id
+                        
                         handle = (info)->
+                            if result.type in ['song', 'album']
+                                common.supplement result, info
                             for song in info.list
                                 songId = song.song_id
                                 trackId = song.track
@@ -790,7 +677,6 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                                         albumInfo = parseAlbumFromHTML body
                                         cache["album#{item.album.id}"] = 'list': parseTrackFromHTML body
                                         common.extend cache["album#{item.album.id}"], albumInfo
-                                        # console.log cache["album#{item.album.id}"]
                                         handle cache["album#{item.album.id}"]
                                         cb error, item
                                     else if response.statusCode is 403
@@ -817,10 +703,13 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                 cb null, result
         
         getInfoFromHTML = (cb)->
+            cb = do ->
+                rawCb = cb
+                (args...)->
+                    rawCb args...
             switch item.type
                 when 'user'
                     urls = ("http://www.xiami.com/space/lib-song/u/#{item.id}/page/#{i}" for i in [item.start..item.end])
-                    console.log urls
                     async.map urls, (uri, cb)->
                         console.log uri
                         common.get uri, (error, response, body)->
@@ -830,7 +719,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                                 console.log songs, body
                                 cb null, songs
                             else
-                                cb error
+                                cb error ? response.statusCode
                     , (err, songs)->
                         console.log songs
                         if _.isArray songs[0]
@@ -853,43 +742,15 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                                 else
                                     cb null, undefined
                             else
-                                cb error, response
-                        ###
-                        async.map songs, (songId, cb)->
-                            common.get "http://www.xiami.com/song/playlist/id/#{songId}/type/#{type['song']}/cat/json", (error, response, body)->
-                                if not error and response.statusCode is 200
-                                    console.log body
-                                    if trackList = body?.data?.trackList ? body?.album?.songs # web: trackList    android: songs
-                                        for song in trackList  
-                                            cb null, parseInfoFromAPI song
-                                    else
-                                        cb null, undefined
-                                else
-                                    cb error, response
-                        , (err, list)->
-                            result =
-                                'name': "用户#{item.id}的第#{item.start}到#{item.end}页收藏"
-                                'type': item.type
-                                'id': item.id
-                                'start': item.start
-                                'end': item.end
-                                'list': list
-                            console.log result, err, 'when user'
-                            cb err, result
-                        ###
+                                cb error ? response.statusCode, response
+                    ###
                 when 'album'
-                    ###
-                    request "http://www.xiami.com/album/#{item.id}", proxy: common.getProxyString(), (error, response, body) ->
-                    ###
-                    ###
-                    if item.language or item.company or item.time or item.style or item.year
-                        return cb null, {}
-                    ###
                     common.get "http://www.xiami.com/album/#{item.id}", (error, response, body) ->
                         if not error and response.statusCode is 200
                             cb null, parseAlbumFromHTML body
                         else
                             cb error, response.statusCode, response
+                    ###
                 when 'collect'
                     # equest "http://www.xiami.com/song/collect/id/#{item.id}", proxy: common.getProxyString(), (error, response, body)->
 
@@ -903,7 +764,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                                 'cover': 
                                     'url': pictureUrl
                         else
-                            cb error, response.statusCode, response
+                            cb error ? response.statusCode, response
                     ###
                     common.get "http://www.xiami.com/app/android/collect?id=#{item.id}", (error, response, body)->
                         name = body.collect.name
@@ -956,7 +817,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                                         else
                                             cb error, response
                             else
-                                cb error, response.statusCode, response
+                                cb error ? response.statusCode, response
                 when 'playlist'
                     cb null, 'name': '播放列表' + item.id
                 else
@@ -966,18 +827,23 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
             getInfoFromAPI
             getInfoFromHTML
         ], (err, result)->
-            console.log err, result
-            if not err
-                result = _.extend.apply this, result
-                for song, id in result.list
-                    #song.trackId = id + 1 if result.type is 'album'
-                    song.year = result.year if result.year
-                if result.type is 'song'
-                    result.name = result.list[0].song.name
-                    result.cover = result.list[0].cover
-                getTrackFromHTML result, cb
+            unless err
+                $scope.$apply ->
+                    logProgressText "#{common.type2name item.type}#{item.id}解析完毕"
+                    result = _.extend.apply this, result
+                    for song, id in result.list
+                        #song.trackId = id + 1 if result.type is 'album'
+                        song.year = result.year if result.year
+                        song.cover.type = common.getCoverType song.cover.url
+                    if result.type is 'song'
+                        result.name = result.list[0].song.name
+                        result.cover = result.list[0].cover
+                        result.year = result.list[0].year
+                    getTrackFromHTML result, cb
             else
-                cb err, result
+                $scope.$apply ->
+                    logProgressText "获取#{common.type2name item.type}#{item.id}的信息失败"
+                    cb err, result
     # getInfo End
 
     $scope.checkAll = (i)->
@@ -1010,6 +876,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                     track.source = task
                     track.run = requestFile
                     track.save = ((info)->
+                        console.log 'info', info
                         filename = common.replaceBat Config.filenameFormat,
                             ['%NAME%', info.song.name],
                             ['%ARTIST%', info.artist.name],
@@ -1063,10 +930,8 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
             $scope.data[i1].checkAll = false
 
     $scope.analyze = ->
-        console.log 'analyze1'
         links = $scope.links.split '\n'
-        targets = (->
-            console.log 'analyze2'
+        targets = do ->
             result = _.map links, (text)->
                 if validator.isURL text
                     artist = common.isArtist.exec text
@@ -1075,6 +940,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                     showcollect = common.isShowcollect.exec text
                     album = common.isAlbum.exec text
                     user = common.isUser.exec text
+                    demo = common.isDemo.exec text
                     playlist = common.isPlaylist.exec text
                     if song
                         type: 'song'
@@ -1098,6 +964,9 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                         id: user[1]
                         start: Number user[2]
                         end: Number user[3] ? user[2]
+                    else if demo
+                        type: 'song'
+                        id: demo[1]
                     else if playlist and User.logged
                         type: 'playlist'
                         id: new Date().getTime()
@@ -1105,13 +974,12 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                 item
             result = _.uniq result, (item)->
                 JSON.stringify item # 低效率, 要求严格的对象格式
-        )()
-        console.log 'analyze3', targets
         if targets.length > 0
+            $scope.progressText = ''
+            $scope.step = 2
             async.map targets, getInfo, (err, result)->
-                if not err
+                unless err
                     $scope.$apply ->
-                        $scope.step = 2
                         $scope.links = ''
                         $scope.data = result
 
@@ -1121,9 +989,8 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                         while i--
                             $scope.checkAll i
                             $scope.data[i].checkAll = true
-
-                        # console.log result
-                                                # if data.list[0].source.type is 'album' and info.track.cd is '2'
+                            
+                        $scope.step = 3
                 else
                     console.error err, result, targets
         else
@@ -1197,6 +1064,7 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
                     console.error err, result
                 else
                     $scope.$apply ->
+                        console.log result
                         if result.data?.userInfo?.user_id?
                             console.log result
                             User.logged = true
@@ -1224,6 +1092,7 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
                         else
                             console.log '登录失败, 你所在的国家或地区可能无法使用虾米音乐网, 请开通VIP后再试.'
                             console.error result
+                            $scope.loginFormInit()
             ###
             request.post 'http://www.xiami.com/vip/update-tone',
                 proxy: common.getProxyString()
@@ -1236,45 +1105,6 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
                     tone_type: 1
             ###
         
-    $scope.loginFormInit = ->
-        async.waterfall [
-            (cb)->
-                common.get 'https://login.xiami.com/member/login' ? 'http://www.xiami.com/member/login', cb
-            (response, body, cb) ->
-                console.log response, body
-                if response.statusCode is 200
-                    $ = cheerio.load(body, ignoreWhitespace:true)
-                    ###
-                    $scope.$apply ->
-                        $scope.taobaoLoginPage = $sce.trustAsResourceUrl url.resolve response.request.href, $('iframe').attr('src') # taobao login
-                        console.log url.resolve response.request.href, $('iframe').attr('src')
-                    ###
-                    fields= $('form input').toArray()
-                    data = {}
-                    for field in fields
-                        name = $(field).attr('name') ? ''
-                        value = $(field).attr('value') ? ''
-                        data[name] = value
-                    if data.validate?
-                        img = fs.createWriteStream 'validate.png'
-                        img.on 'finish',->
-                            cb null, data
-                        common.get("https://login.xiami.com/coop/checkcode?forlogin=1&t=#{Math.random()}").pipe img
-                    else
-                        cb null, data
-                else
-                    cb null, {}
-            (data, cb)->
-                if data.validate?
-                    $scope.$apply ->
-                        $scope.validateUrl = "validate.png?#{Math.random()}"
-                formData = data
-                console.log formData
-                cb null, data
-        ], (err, result)->
-            if err
-                console.log err, result
-
     $scope.logout = ->
         Config.cookie = ''
         pCookieRemoved = Promise.all [$localForage.removeItem('config.cookie'), $localForage.removeItem('config.jar')]
@@ -1290,10 +1120,10 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
     $scope.sign = ->
         common.post 'http://www.xiami.com/task/signin'
             ,(error, response, body, cb)->
-                if not error
+                unless error
                     $scope.$apply ->
                         User.sign.hasCheck = true
-                        User.sign.num = parseInt body
+                        User.sign.num = +body
                 else
                     console.error error
         ###
@@ -1306,7 +1136,7 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
                 if not error
                     $scope.$apply ->
                         User.sign.hasCheck = true
-                        User.sign.num = parseInt body
+                        User.sign.num = +body
                 else
                     console.error error
         ###
@@ -1319,113 +1149,27 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
             require('nw.gui').Window.get().cookies.getAll
                     domain: '.xiami.com'
                 ,(cookies)->
-                    # console.log cookies
-                    Config.cookie = (->
+                    console.log cookies
+                    Config.cookie = do ->
                         ret = ''
                         for i in cookies
                             ret += "#{i.name}=#{i.value}; "
                         ret
-                    )()
                     $scope.$apply setLogged
     
                     newWindow = null
 
-    ###
-    $scope.loginPageLoad = ->
-        iframe = document.querySelector 'iframe.loginPage'
-        iframe.nwUserAgent = Config.headers['User-Agent']
-        iframeUrl = url.parse iframe.contentDocument.URL
-        #console.log iframeUrl, iframe.contentDocument.cookie
-        if iframeUrl.href is 'http://www.xiami.com/'
-            require('nw.gui').Window.get().cookies.getAll
-                    domain: '.xiami.com'
-                ,(cookies)->
-                    # console.log cookies
-                    Config.cookie = (->
-                        ret = ''
-                        for i in cookies
-                            ret += "#{i.name}=#{i.value}; "
-                        ret
-                    )()
-                    $scope.$apply setLogged
-    ###
-
     $scope.loginByCookie = ->
         Config.cookie = $scope.cookie
         setLogged()
-
-    $scope.loginByUserData = ->
-        formData['email'] = $scope.email
-        formData['password'] = $scope.password
-        formData['validate'] = $scope.validate if $scope.validateUrl
-        if $scope.remember
-            $localForage.setItem('account',
-                email: $scope.email
-                password: $scope.password
-                remember: $scope.remember
-            ).then()
-        else
-            $scope.email = $scope.password = ''
-            $localForage.removeItem('account').then()
-        $scope.validate = ''
-
-        async.series [
-            (cb)->
-                async.waterfall [
-                        (cb)->
-                            common.post 'http://www.xiami.com/member/login' ? 'https://login.xiami.com/member/login', formData,
-                                'Referer': 'http://www.xiami.com/member/login' ? 'https://login.xiami.com/member/login'
-                                'Host': 'www.xiami.com' ? 'login.xiami.com'
-                                'Origin': 'http://www.xiami.com' ? 'https://login.xiami.com'
-                            , cb
-
-                            ###
-                            request.post 'http://www.xiami.com/member/login' ? 'https://login.xiami.com/member/login',
-                                form: formData
-                                proxy: common.getProxyString()
-                                headers: common.mixin(Config.headers,
-                                    'Referer': 'http://www.xiami.com/member/login' ? 'https://login.xiami.com/member/login'
-                                    'Host': 'www.xiami.com' ? 'login.xiami.com'
-                                    'Origin': 'http://www.xiami.com' ? 'https://login.xiami.com'
-                                ), cb
-                            ###
-                        (response, body, cb) ->
-                            fs.unlink 'validate.png' if fs.existsSync 'validate.png'
-                            cookie = response.headers['set-cookie']
-                            if _.isArray cookie
-                                cookie = cookie.join ';'
-                            cb null, cookie
-                    ],(err, result)->
-                        if err
-                            console.error err, result
-                            cb()
-                        else
-                            Config.cookie = result
-                            $scope.$apply ->
-                                # User.logged = true
-                                cb()
-            (cb)->
-                setLogged cb
-        ], (err, result)->
-            throw err if err
-            if User.isVip
-                # open hq
-                common.post 'http://www.xiami.com/vip/update-tone', null,
-                    user_id: User.id
-                    tone_type: 1
-                , null
-                ###
-                request.post 'http://www.xiami.com/vip/update-tone',
-                    proxy: common.getProxyString()
-                    headers:
-                        common.mixin Config.headers,
-                            Cookie: Config.cookie
-                            Referer: 'http://www.xiami.com/vip/myvip'
-                    form:
-                        user_id: User.id
-                        tone_type: 1
-                ###
-
+        
+    $scope.refreshVerification = ->
+        img = fs.createWriteStream 'validate.png'
+        img.on 'finish',->
+            $scope.$apply ->
+                $scope.validateUrl = "app://XiamiThief/validate.png?#{Math.random()}"
+        common.getReq("https://login.xiami.com/coop/checkcode?forlogin=1&t=#{Math.random()}").pipe img
+        
     _.defer ->        
         $scope.loginFormInit()
         

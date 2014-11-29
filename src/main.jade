@@ -22,7 +22,10 @@ html(lang='zh')
         script(src='../resource/library/checklist-model.js')
         script(src='../resource/library/quick-ng-repeat.js')
         script.
-            var App = angular.module('XiamiThief', ['LocalForageModule', 'checklist-model', 'QuickList']);
+            var App = angular.module('XiamiThief', ['LocalForageModule', 'checklist-model', 'QuickList'], function($compileProvider){
+                $compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|ftp|mailto|chrome-extension|app):/);
+                $compileProvider.imgSrcSanitizationWhitelist(/^\s*(https?|ftp|mailto|chrome-extension|app):|data:image\//);
+            });
         script(src='../script/main.js')
         script(src='../script/filter.js')
         script(src='../script/directive.js')

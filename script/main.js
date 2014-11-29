@@ -14,20 +14,22 @@
     return _results;
   })();
 
-  window.require = (function() {
-    var originRequire;
-    originRequire = require;
-    return function(path) {
-      if ((version[1] === 8 || (version[1] === 10 && version[2] >= 1)) && path[0] === '.') {
-        path = '.' + path;
-      }
-      return originRequire(path);
-    };
-  })();
+
+  /*
+  window.require = do ->
+      originRequire = require
+      (path)->
+           * console.log version[1] is 8, (version[1] is 10 and version[2] >= 1), path[0] is '.'
+          if (version[1] is 8 or
+          (version[1] is 10 and version[2] >= 1)) and
+          path[0] is '.'
+              path = '.' + path
+          originRequire path
+   */
 
   gui = require('nw.gui');
 
-  pkg = require('./package');
+  pkg = require('../package');
 
   os = require('os');
 
@@ -39,15 +41,9 @@
 
   url = require('url');
 
-  queue = require('./script/queue');
+  queue = require('../script/queue');
 
-  common = require('./script/common');
-
-
-  /*
-  if process.env.NODE_ENV isnt 'production'
-      require 'longjohn'
-   */
+  common = require('../script/common');
 
   process.on('uncaughtException', function(err) {
     console.error(err);
@@ -92,7 +88,6 @@
     common.getReq = function(url, headers, cb) {
       var args, req;
       args = arguments;
-      console.log(url, '"' + common.getProxyString() + '"', common.config.cookie);
       switch (arguments.length) {
         case 3:
           url = arguments[0], headers = arguments[1], cb = arguments[2];
@@ -106,6 +101,7 @@
         default:
           throw new Error('arguments error.');
       }
+      console.log('GET', common.config.cookie, angular.copy(common.config.jar));
       headers = common.mixin({
         Cookie: common.config.cookie,
         Referer: 'http://www.xiami.com/'
@@ -121,7 +117,6 @@
     common.get = function(url, headers, cb) {
       var args, req;
       args = arguments;
-      console.log(url, '"' + common.getProxyString() + '"', common.config.cookie);
       switch (arguments.length) {
         case 3:
           url = arguments[0], headers = arguments[1], cb = arguments[2];
@@ -135,6 +130,7 @@
         default:
           throw new Error('arguments error.');
       }
+      console.log('GET', common.config.cookie, angular.copy(common.config.jar));
       headers = common.mixin({
         Cookie: common.config.cookie,
         Referer: 'http://www.xiami.com/'
@@ -148,7 +144,6 @@
       }, function(error, response, body) {
         var e, hasCheckcode, _ref, _ref1, _ref2, _ref3;
         hasCheckcode = common.inStr(body, 'regcheckcode.taobao.com') || common.inStr(body, '<div class="msg e needcode">');
-        console.log(url, 'hasCheckcode:' + hasCheckcode);
         if (hasCheckcode) {
           if (newWindow != null) {
             return common.setInterval(function() {
@@ -194,7 +189,6 @@
     common.postReq = function(url, data, headers, cb) {
       var args, req;
       args = arguments;
-      console.log(url, '"' + common.getProxyString() + '"', common.config.cookie);
       switch (arguments.length) {
         case 4:
           url = arguments[0], data = arguments[1], headers = arguments[2], cb = arguments[3];
@@ -211,6 +205,7 @@
         default:
           throw new Error('arguments error.');
       }
+      console.log('POST', common.config.cookie, angular.copy(common.config.jar));
       headers = common.mixin({
         Cookie: common.config.cookie,
         Referer: 'http://www.xiami.com/'
@@ -227,7 +222,6 @@
     return common.post = function(url, data, headers, cb) {
       var args, req;
       args = arguments;
-      console.log(url, '"' + common.getProxyString() + '"', common.config.cookie);
       switch (arguments.length) {
         case 4:
           url = arguments[0], data = arguments[1], headers = arguments[2], cb = arguments[3];
@@ -244,6 +238,7 @@
         default:
           throw new Error('arguments error.');
       }
+      console.log('POST', common.config.cookie, angular.copy(common.config.jar));
       headers = common.mixin({
         Cookie: common.config.cookie,
         Referer: 'http://www.xiami.com/'
@@ -438,29 +433,6 @@
         return common.loadLoginPage();
       }
     }));
-
-    /*
-    menu.append menuItem
-        type: 'separator'
-    
-    menu.append menuItem
-        type: 'normal'
-        label: '反馈'
-        click: ->
-            dialog('.dialog .feedback').show()
-    
-    menu.append menuItem
-        type: 'normal'
-        label: '检查更新'
-        click: ->
-            dialog('.dialog .update').show()
-    
-    menu.append menuItem
-        type: 'normal'
-        label: '关于XiamiThief'
-        click: ->
-            dialog('.dialog .about').show()
-     */
     menu.append(menuItem({
       type: 'separator'
     }));
@@ -605,17 +577,13 @@
                           i.state = State.Running;
                           i.run((function(i) {
                             return function(err, data) {
-                              if (err) {
-                                console.error(err, q.list);
-                                i.state = State.Fail;
-                              } else {
-                                i.state = State.Success;
-                              }
-                              i.state = err != null ? State.Fail : State.Success;
-                              i.process = 100;
-                              running--;
-                              refresh();
-                              return q.dirtyCheck();
+                              return $rootScope.$apply(function() {
+                                i.process = 100;
+                                i.state = err ? State.Fail : State.Success;
+                                running--;
+                                refresh();
+                                return q.dirtyCheck();
+                              });
                             };
                           })(i));
                           running++;
@@ -822,8 +790,6 @@
       switch (e.keyCode) {
         case 27:
           return dialogAllHide();
-        case 13:
-          return dialog('.dialog .create').show();
       }
     });
     $(document).keydown(function(e) {

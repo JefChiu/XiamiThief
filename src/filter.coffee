@@ -1,6 +1,6 @@
 'use strict'
 
-common = require './script/common'
+common = require '../script/common'
 _ = require 'underscore'
 
 App.filter 'picSize', ->
@@ -27,13 +27,7 @@ App.filter 'preview', ->
         )[type]() if input?
 
 App.filter 'type2name', ->
-    (type)->
-        (
-            song: '单曲'
-            album: '专辑'
-            collect: '精选集'
-            artist: '艺人热门歌曲'
-        )[type] if type?
+    common.type2name
 
 ###
 App.filter 'group', ->

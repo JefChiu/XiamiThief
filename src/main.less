@@ -195,6 +195,7 @@ body{
     cursor: default;
     
     border: 1px solid #777;
+    background-color: rgba(255, 255, 255, 0.9)
 }
 
 body>header{
@@ -231,6 +232,10 @@ input[type='radio']{
     &, & + label{
         vertical-align: middle;
     }
+}
+
+input:focus{
+    outline: none;
 }
 
 button{
@@ -442,10 +447,18 @@ ul.task{
         .flex(column);
         height: 100%;
         width: 100%;
+        
+        .verification{
+            flex: auto;
+            
+            img{
+                cursor: pointer;
+            }
+        }
     }
 
     .create{
-        .transparent-white(0.5);
+        .transparent-white(0.9);
         >*{
             .no-flex;
             margin-top:10px;

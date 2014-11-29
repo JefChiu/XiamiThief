@@ -74,6 +74,15 @@
     }
   ]);
 
+
+  /*
+  App.directive 'input', ->
+      restrict: 'E'
+      link: (scope, element, attr)->
+          element.on 'keydown', (event)->
+              false if event.keyCode is 13
+   */
+
   App.directive('iframeOnload', function($parse) {
     return function(scope, element, attr) {
       var fn;

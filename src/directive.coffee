@@ -51,6 +51,14 @@ App.directive 'state', ['State', (State)->
             element.css 'backgroundImage', "-webkit-linear-gradient(top, #{color}, #{color})"
 ]
 
+###
+App.directive 'input', ->
+    restrict: 'E'
+    link: (scope, element, attr)->
+        element.on 'keydown', (event)->
+            false if event.keyCode is 13
+###
+
 App.directive 'iframeOnload', ($parse)->
     (scope, element, attr)->
         fn = $parse attr['iframeOnload']

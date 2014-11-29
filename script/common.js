@@ -1,6 +1,6 @@
 (function() {
   'use strict';
-  var config, execPath, extend, fs, getProxyString, getSafeFilename, getSafeFoldername, getValidArray, inStr, index, isAlbum, isArtist, isCollect, isPlaylist, isShowcollect, isSong, isUser, leftTrim, mixin, parseLocation, path, replaceBat, replaceLast, request, rightTrim, safePath, setInterval, timers, toNum, user, _,
+  var config, execPath, extend, fs, getCoverType, getProxyString, getSafeFilename, getSafeFoldername, getValidArray, inStr, index, isAlbum, isArtist, isCollect, isDemo, isPlaylist, isShowcollect, isSong, isUser, leftTrim, mixin, parseLocation, path, replaceBat, replaceLast, request, rightTrim, safePath, setInterval, supplement, timers, toNum, type2name, user, _,
     __slice = [].slice;
 
   path = require('path');
@@ -26,6 +26,8 @@
   isUser = /www.xiami.com\/space\/lib-song\/u\/(\d+)\/page\/(\d+)-?(\d+)?/;
 
   isPlaylist = /www.xiami.com\/play/;
+
+  isDemo = /i.xiami.com\/\S+\/demo\/(\d+)/;
 
   leftTrim = function(str) {
     return str != null ? str.replace(/^\s+/, '') : void 0;
@@ -115,6 +117,21 @@
       for (key in obj) {
         value = obj[key];
         source[key] = value;
+      }
+    }
+    return source;
+  };
+
+  supplement = function() {
+    var args, key, obj, source, value, _i, _len;
+    source = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+    for (_i = 0, _len = args.length; _i < _len; _i++) {
+      obj = args[_i];
+      for (key in obj) {
+        value = obj[key];
+        if (source[key] == null) {
+          source[key] = value;
+        }
       }
     }
     return source;
@@ -315,6 +332,22 @@
      */
   };
 
+  getCoverType = function(url) {
+    var _ref;
+    return (_ref = /\.([\w\d]+)$/.exec(url)) != null ? _ref[1] : void 0;
+  };
+
+  type2name = function(type) {
+    if (type != null) {
+      return {
+        song: '单曲',
+        album: '专辑',
+        collect: '精选集',
+        artist: '艺人热门歌曲'
+      }[type];
+    }
+  };
+
   index = function(arr, i) {
     if (i < 0) {
       return arr[arr.length + i];
@@ -332,6 +365,7 @@
     index: index,
     mixin: mixin,
     extend: extend,
+    supplement: supplement,
     parseLocation: parseLocation,
     replaceLast: replaceLast,
     replaceBat: replaceBat,
@@ -341,6 +375,8 @@
     getSafeFoldername: getSafeFoldername,
     getProxyString: getProxyString,
     getValidArray: getValidArray,
+    getCoverType: getCoverType,
+    type2name: type2name,
     inStr: inStr,
 
     /*
@@ -354,6 +390,7 @@
     isAlbum: isAlbum,
     isUser: isUser,
     isPlaylist: isPlaylist,
+    isDemo: isDemo,
     setInterval: setInterval
   };
 

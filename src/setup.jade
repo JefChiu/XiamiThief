@@ -7,22 +7,10 @@ ul.content
     li.login(ng-controller='LoginCtrl', style='display:flex')
         h1 帐号设置
         form.caption(ng-hide='user.logged')
-            h2.subhead.loginByUserData 常规登录(仅支持虾米帐号)
-            label(for='email') Email
-            input#email(type='email', ng-model='email', name='email')
-            label(for='password', minlength=6, maxlength=16) 密码
-            input#password(type='password', ng-model='password', name='password')
-            div(ng-show='validateUrl')
-                label(for='validateUrl') 验证码
-                input#validate(type='text', ng-model='validate', name='validate')
-                img(ng-src='{{ validateUrl }}')
-            label(for='rememberAccount')
-                input#remember(type='checkbox', ng-model='remember', name='remember')
-                | 记住我
-            button(ng-click='loginByUserData()') 登录
-            h2.subhead.loginByWebPage 网页登录(支持淘宝帐号等第三方登录)
+            h2.subhead.loginByWebPage 网页登录
             button(ng-click='loginByWeb()') 网页登录
             //iframe.loginPage(nwdisable, nwfaketop, iframe-onload="loginPageLoad()")
+            
             h2.subhead.loginByCookie 手动输入Cookie(高级)
             label(for='cookie') Cookie
             input#cookie(type='text', ng-model='cookie', name='cookie')

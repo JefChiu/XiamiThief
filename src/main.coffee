@@ -2,7 +2,8 @@
 
 window.version = (Number i for i in process.versions['node-webkit'].split '.')
 
-window.require = (->
+###
+window.require = do ->
     originRequire = require
     (path)->
         # console.log version[1] is 8, (version[1] is 10 and version[2] >= 1), path[0] is '.'
@@ -11,28 +12,24 @@ window.require = (->
         path[0] is '.'
             path = '.' + path
         originRequire path
-)()
+###
 
 gui = require 'nw.gui'
-pkg = require './package'
+pkg = require '../package'
 os = require 'os'
 path = require 'path'
 timers = require 'timers'
 async = require 'async'
 url = require 'url'
-queue = require './script/queue'
-common = require './script/common'
-###
-if process.env.NODE_ENV isnt 'production'
-    require 'longjohn'
-###
+queue = require '../script/queue'
+common = require '../script/common'
 
 process.on('uncaughtException',(err)->
     console.error err
     console.error err.stack
 )
 
-(->
+do ->
     newWindow = null
     
     request = (require 'request').defaults
@@ -70,7 +67,7 @@ process.on('uncaughtException',(err)->
     
     common.getReq = (url, headers, cb)->
         args = arguments
-        console.log url, '"' + common.getProxyString() + '"', common.config.cookie
+        #console.log url, '"' + common.getProxyString() + '"', common.config.cookie
         switch arguments.length
             when 3
                 [url, headers, cb] = arguments
@@ -80,7 +77,7 @@ process.on('uncaughtException',(err)->
                 [url] = arguments
             else
                 throw new Error 'arguments error.'
-
+        console.log 'GET', common.config.cookie, angular.copy common.config.jar
         headers = common.mixin
             Cookie: common.config.cookie
             Referer: 'http://www.xiami.com/'
@@ -95,7 +92,7 @@ process.on('uncaughtException',(err)->
 
     common.get = (url, headers, cb)->
         args = arguments
-        console.log url, '"' + common.getProxyString() + '"', common.config.cookie
+        #console.log url, '"' + common.getProxyString() + '"', common.config.cookie
         switch arguments.length
             when 3
                 [url, headers, cb] = arguments
@@ -105,7 +102,7 @@ process.on('uncaughtException',(err)->
                 [url] = arguments
             else
                 throw new Error 'arguments error.'
-
+        console.log 'GET', common.config.cookie, angular.copy common.config.jar
         headers = common.mixin
             Cookie: common.config.cookie
             Referer: 'http://www.xiami.com/'
@@ -120,11 +117,11 @@ process.on('uncaughtException',(err)->
         , (error, response, body)->
             # resProcess error, response, body, cb
             hasCheckcode = common.inStr(body, 'regcheckcode.taobao.com') or common.inStr(body, '<div class="msg e needcode">')
-            console.log url, 'hasCheckcode:' + hasCheckcode
+            #console.log url, 'hasCheckcode:' + hasCheckcode
             if hasCheckcode
                 if newWindow?
                     common.setInterval ->
-                        if not newWindow?
+                        unless newWindow?
                             common.get.apply null, args
                         not newWindow?
                     , 1000
@@ -137,13 +134,12 @@ process.on('uncaughtException',(err)->
                         common.get.apply null, args
                         newWindow = null
             else
-                # console.log response
                 if common.inStr response?.headers?['content-type'], 'json'
                     try
                         body = JSON.parse body
                     catch e
                         console.error e, body
-                else if common.inStr(response?.request?.headers?['Content-Type'], 'json')
+                else if common.inStr response?.request?.headers?['Content-Type'], 'json'
                     try
                         body = JSON.parse body
                     catch e
@@ -153,7 +149,7 @@ process.on('uncaughtException',(err)->
 
     common.postReq = (url, data, headers, cb)->
         args = arguments
-        console.log url, '"' + common.getProxyString() + '"', common.config.cookie
+        #console.log url, '"' + common.getProxyString() + '"', common.config.cookie
         switch arguments.length
             when 4
                 [url, data, headers, cb] = arguments
@@ -166,6 +162,7 @@ process.on('uncaughtException',(err)->
             else
                 throw new Error 'arguments error.'
 
+        console.log 'POST', common.config.cookie, angular.copy common.config.jar
         headers = common.mixin
                 Cookie: common.config.cookie
                 Referer: 'http://www.xiami.com/'
@@ -181,7 +178,7 @@ process.on('uncaughtException',(err)->
         
     common.post = (url, data, headers, cb)->
         args = arguments
-        console.log url, '"' + common.getProxyString() + '"', common.config.cookie
+        #console.log url, '"' + common.getProxyString() + '"', common.config.cookie
         switch arguments.length
             when 4
                 [url, data, headers, cb] = arguments
@@ -194,6 +191,7 @@ process.on('uncaughtException',(err)->
             else
                 throw new Error 'arguments error.'
 
+        console.log 'POST', common.config.cookie, angular.copy common.config.jar
         headers = common.mixin
                 Cookie: common.config.cookie
                 Referer: 'http://www.xiami.com/'
@@ -212,7 +210,7 @@ process.on('uncaughtException',(err)->
             if hasCheckcode
                 if newWindow?
                     common.setInterval ->
-                        if not newWindow?
+                        unless newWindow?
                             common.post.apply null, args
                         not newWindow?
                     , 1000
@@ -238,7 +236,6 @@ process.on('uncaughtException',(err)->
                         console.error e, body
                 cb? error, response, body
         req
-)()
 
 if gui.App.addOriginAccessWhitelistEntry?
     originWhitelist = [
@@ -272,7 +269,7 @@ window.addEventListener 'load', ->
 #window.openBrowser = gui.Shell.openItem
 
 common.loadLoginPage = ->
-    if not common.user.logged
+    unless common.user.logged
         iframe = document.querySelector 'iframe.loginPage'
         cookies = require('nw.gui').Window.get().cookies
         removeCookie = (args...)->
@@ -288,7 +285,7 @@ common.loadLoginPage = ->
 window.dialog = (element)->
     window.tray?._events.click()
     element = document.querySelectorAll element if _.isString element
-    if not (element.length or element.length is 0) #Not NodeList or Array
+    unless (element.length or element.length is 0) #Not NodeList or Array
         element = [element]
     if element.length > 0
         show:->
@@ -309,7 +306,7 @@ window.dialog = (element)->
         show:->console.error 'show',element
         hide:->console.error 'hide',element
 
-window.menuStart = (->
+window.menuStart = do ->
     menu = new gui.Menu
 
     menuItem = (options)->
@@ -329,28 +326,7 @@ window.menuStart = (->
         click: ->
             dialog('.dialog .setup').show()
             common.loadLoginPage()
-    ###
-    menu.append menuItem
-        type: 'separator'
 
-    menu.append menuItem
-        type: 'normal'
-        label: '反馈'
-        click: ->
-            dialog('.dialog .feedback').show()
-
-    menu.append menuItem
-        type: 'normal'
-        label: '检查更新'
-        click: ->
-            dialog('.dialog .update').show()
-
-    menu.append menuItem
-        type: 'normal'
-        label: '关于XiamiThief'
-        click: ->
-            dialog('.dialog .about').show()
-    ###
     menu.append menuItem
         type: 'separator'
 
@@ -367,7 +343,6 @@ window.menuStart = (->
         menu.createMacBuiltin 'xiami-thief'
 
     menu
-)()
 
 win.on 'close',->
     @hide()
@@ -459,18 +434,12 @@ App.factory 'TaskQueue', ['$rootScope', 'Config', 'quickRepeatList', 'State', ($
                                             i.state = State.Running
                                             i.run ((i)->
                                                 (err, data)->
-                                                    if err
-                                                        console.error err, q.list
-                                                        i.state = State.Fail
-                                                    else
-                                                        i.state = State.Success
-                                                    # console.log 'info: ', i
-                                                    # console.log 'err:', err
-                                                    i.state = if err? then State.Fail else State.Success
-                                                    i.process = 100
-                                                    running--
-                                                    refresh()
-                                                    q.dirtyCheck()
+                                                    $rootScope.$apply ->
+                                                        i.process = 100
+                                                        i.state = if err then State.Fail else State.Success
+                                                        running--
+                                                        refresh()
+                                                        q.dirtyCheck()
                                             )(i)
                                             running++
                                             refresh()
@@ -641,10 +610,6 @@ $ ->
         switch e.keyCode
             when 27 # Esc
                 dialogAllHide()
-            #when 123 # F12
-            #    win.showDevTools()
-            when 13 # Enter
-                dialog('.dialog .create').show()
 
     $(document).keydown (e)->
         if e.keyCode is 93 # menu key

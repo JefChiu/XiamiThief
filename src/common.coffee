@@ -13,6 +13,7 @@ isShowcollect = /www.xiami.com\/song\/showcollect\/id\/(\d+)/
 isAlbum = /www.xiami.com\/album\/(\d+)/
 isUser = /www.xiami.com\/space\/lib-song\/u\/(\d+)\/page\/(\d+)-?(\d+)?/
 isPlaylist = /www.xiami.com\/play/
+isDemo = /i.xiami.com\/\S+\/demo\/(\d+)/
 
 leftTrim = (str)->
     str?.replace /^\s+/, ''
@@ -84,6 +85,12 @@ extend = (source, args...)->
     for obj in args
         for key, value of obj
             source[key] = value
+    source
+    
+supplement = (source, args...)->
+    for obj in args
+        for key, value of obj
+            source[key] = value if not source[key]?
     source
 
 parseLocation = (param1) ->
@@ -232,6 +239,17 @@ getValidArray = (arr)->
     ret
     ###
 
+getCoverType = (url)->
+    (/\.([\w\d]+)$/.exec url)?[1]
+    
+type2name = (type)->
+    (
+        song: '单曲'
+        album: '专辑'
+        collect: '精选集'
+        artist: '艺人热门歌曲'
+    )[type] if type?
+    
 index = (arr, i)->
     if i < 0
         arr[arr.length + i]
@@ -247,6 +265,7 @@ module.exports = {
     index
     mixin
     extend
+    supplement
     parseLocation
     replaceLast
     replaceBat
@@ -256,6 +275,8 @@ module.exports = {
     getSafeFoldername
     getProxyString
     getValidArray
+    getCoverType
+    type2name
     inStr
     ###
     get
@@ -268,5 +289,6 @@ module.exports = {
     isAlbum
     isUser
     isPlaylist
+    isDemo
     setInterval
 }

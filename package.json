@@ -2,7 +2,7 @@
   "name": "xiami-thief",
   "main": "app://xiamithief/template/main.html",
   "description": "Xiami HQ Music Downloader",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "license": "GPL-2.0",
   "devDependencies": {
     "grunt": "^0.4.5",

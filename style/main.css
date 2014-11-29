@@ -166,6 +166,7 @@ body {
   -webkit-user-select: none;
   cursor: default;
   border: 1px solid #777;
+  background-color: rgba(255, 255, 255, 0.9);
 }
 body > * {
   -webkit-flex: 1;
@@ -200,6 +201,9 @@ input[type='radio'],
 input[type='checkbox'] + label,
 input[type='radio'] + label {
   vertical-align: middle;
+}
+input:focus {
+  outline: none;
 }
 button {
   margin: 10px 0;
@@ -454,8 +458,14 @@ ul.task{
   -webkit-flex: 1;
   flex: 1;
 }
+.dialog form .verification {
+  flex: auto;
+}
+.dialog form .verification img {
+  cursor: pointer;
+}
 .dialog .create {
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.9);
 }
 .dialog .create > * {
   -webkit-flex: none !important;

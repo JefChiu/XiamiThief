@@ -2,7 +2,7 @@
   'use strict';
   var common, _;
 
-  common = require('./script/common');
+  common = require('../script/common');
 
   _ = require('underscore');
 
@@ -28,16 +28,7 @@
   });
 
   App.filter('type2name', function() {
-    return function(type) {
-      if (type != null) {
-        return {
-          song: '单曲',
-          album: '专辑',
-          collect: '精选集',
-          artist: '艺人热门歌曲'
-        }[type];
-      }
-    };
+    return common.type2name;
   });
 
 
