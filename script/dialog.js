@@ -1393,8 +1393,7 @@
                 }
               } else {
                 console.log('登录失败, 你所在的国家或地区可能无法使用虾米音乐网, 请开通VIP后再试.');
-                console.error(result);
-                return $scope.loginFormInit();
+                return console.error(result);
               }
             });
           }
@@ -1426,8 +1425,7 @@
             delete User[i];
           }
           User.logged = false;
-          common.loadLoginPage();
-          return $scope.loginFormInit();
+          return common.loadLoginPage();
         });
       });
     };
@@ -1498,7 +1496,6 @@
       return common.getReq("https://login.xiami.com/coop/checkcode?forlogin=1&t=" + (Math.random())).pipe(img);
     };
     return _.defer(function() {
-      $scope.loginFormInit();
       return window.setLogged = setLogged;
 
       /*

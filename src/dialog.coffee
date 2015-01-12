@@ -178,7 +178,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
         mkdirp pathFolder, (err)->
             unless err
                 savePath = path.resolve pathFolder, filename
-                
+
                 timestamp = new Date().getTime()
 
                 coverDownload = (cb)->
@@ -255,13 +255,13 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                         console.log image.src
                     else
                         cb null
-                
+
                 lyricDownload = (cb)->
                     # console.log 'lyricDownload'
                     if (Config.hasLyric or (Config.hasId3 and Config.id3.hasLyric)) and info.lyric.url
                         # console.log 'lyricDownload is true'
                         if Config.hasLyric
-                            
+
                             fs.exists "#{savePath}.lrc", (exist)->
                                 transportStream = (suffix)->
                                     lrcFilename = "#{savePath + if suffix then ' ' + suffix else ''}.lrc"
@@ -277,7 +277,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                                         cb err
                                     req = common.get info.lyric.url
                                     req.pipe f
-                                    
+
                                 if exist
                                     fs.stat "#{savePath}.lrc", (stat)->
                                         switch Config.fileExistSolution
@@ -306,9 +306,9 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                     # console.log 'writeId3Info'
                     if Config.hasId3
                         # console.log 'writeId3Info is true'
-                        
+
                         id3Writer = new id3v23 path.resolve pathFolder, "#{info.song.id}.download"
-                        
+
                         # TALB 专辑名
                         if Config.id3.hasAlbum and info.album.name
                             id3Writer.setTag 'TALB', info.album.name
@@ -320,7 +320,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                         # TPE2 专辑艺术家/乐队
                         if Config.id3.hasAlbumArtist and info.album.artist
                             id3Writer.setTag 'TPE2', info.album.artist
-                            
+
                         console.log info.artist.name, info.album.artist
 
                         # TIT2 歌名
@@ -433,7 +433,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                                                             if info.state is State.Running
                                                                 $scope.$apply ->
                                                                     info.process = nowBytes / contentLength * 100
-                                                                
+
                                                             if info.process >= 100
                                                                 f.end()
                                                             else
@@ -505,13 +505,13 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                     cb err
             else
                 cb err
-                
+
     logProgressText = (text)->
         $scope.progressText = "#{text}\n"
 
     getInfo = (item, cb)->
         logProgressText "开始获取#{common.type2name item.type}#{item.id}的信息"
-        
+
         parseInfoFromAPI = (song)->
             songId = song.song_id
             songName = ent.decode song.name ? song.title # web: title    android: name
@@ -547,7 +547,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
             'url':
                 'lq': lqUrl
                 'hq': lqUrl
-        
+
         getInfoFromAPI = (cb)->
             # "http://www.xiami.com/app/xiating/album?id=#{item.id}" HTML
             switch item.type
@@ -586,7 +586,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                     cb null, result
                 else
                     cb error ? response.statusCode, {}
-        
+
         parseAlbumFromHTML = (html)->
             $ = cheerio.load html, ignoreWhitespace: true
             name = common.replaceLast $('#title h1').text(), $('#title h1').children().text(), ''
@@ -607,7 +607,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
             'year': info['发行时间']?[...4]
             'cover':
                 'url': pictureUrl
-        
+
         parseTrackFromHTML = (html)->
             $ = cheerio.load html, ignoreWhitespace: true
             result = []
@@ -625,14 +625,14 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                         'cd_serial': cdSerial.toString()
                         'cd_count': cdCount.toString()
             result
-            
+
         getTrackFromHTML = (result, cb)->
             if common.inStr(Config.filenameFormat, '%TRACK%') or
             (Config.saveMode isnt 'direct') or
             (Config.hasId3 and (Config.id3.hasTrack or Config.id3.hasDisc))
                 async.mapSeries result.list, (item, cb)->
                         return cb null, item if +item.album.id is 0 # demo music no album id
-                        
+
                         handle = (info)->
                             if result.type in ['song', 'album']
                                 common.supplement result, info
@@ -648,7 +648,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                                     item.track.id = trackId
                                     item.track.cd = cdCount
                                     break
-                        
+
                         if cache["album#{item.album.id}"]?
                             handle cache["album#{item.album.id}"]
                             cb null, item
@@ -664,13 +664,13 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                             ###
                             getTrack = ->
                                 getTrack.count++
-                                
+
                                 if getTrack.count > 3
                                     cb new Error '遭到屏蔽, 暂时无法使用'
                                     return
-                                
+
                                 console.log uri, cache
-                                
+
                                 common.get uri, (error, response, body)->
                                     console.log error, response.statusCode
                                     if not error and response.statusCode is 200
@@ -701,7 +701,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                     cb err, result
             else
                 cb null, result
-        
+
         getInfoFromHTML = (cb)->
             cb = do ->
                 rawCb = cb
@@ -729,7 +729,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                             if not error and response.statusCode is 200
                                 list = []
                                 if trackList = body?.data?.trackList ? body?.album?.songs # web: trackList    android: songs
-                                    for song in trackList  
+                                    for song in trackList
                                         list.push parseInfoFromAPI song
                                     result =
                                         'name': "用户UID#{item.id}的第#{ item.start + if item.end and item.end isnt item.start then '至' + item.end else '' }页收藏"
@@ -761,7 +761,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                             pictureUrl = $('#cover_logo a img').attr('src')?.replace(/_\d\.jpg/, '.jpg')# 从小图Url获得大图Url
                             cb null,
                                 'name': name
-                                'cover': 
+                                'cover':
                                     'url': pictureUrl
                         else
                             cb error ? response.statusCode, response
@@ -780,7 +780,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                                 $ = cheerio.load body, ignoreWhitespace:true
                                 artistName = common.replaceLast $('#title h1').text(), $('#title h1').children().text(), ''
                                 pictureUrl = $('#artist_photo a img').attr('src')?.replace(/_\d\.jpg/, '.jpg')# 从小图Url获得大图Url
-                                
+
                                 urls = ("http://www.xiami.com/artist/top/id/#{item.id}/page/#{i}" for i in [item.start..item.end])
                                 async.map urls, (uri, cb)->
                                     console.log uri
@@ -800,7 +800,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                                         if not error and response.statusCode is 200
                                             list = []
                                             if trackList = body?.data?.trackList ? body?.album?.songs # web: trackList    android: songs
-                                                for song in trackList  
+                                                for song in trackList
                                                     list.push parseInfoFromAPI song
                                                 result = common.mixin result,
                                                     'name': "艺人#{artistName}的第#{ item.start + if item.end and item.end isnt item.start then '至' + item.end else '' }页热门歌曲"
@@ -822,7 +822,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                     cb null, 'name': '播放列表' + item.id
                 else
                     cb null, {}
-        
+
         async.parallel [
             getInfoFromAPI
             getInfoFromHTML
@@ -911,7 +911,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                             when 'direct'
                             else
                                 foldername = ''
-                        if (info.source.type is 'album' or Config.saveMode is 'alwaysClassification') and 
+                        if (info.source.type is 'album' or Config.saveMode is 'alwaysClassification') and
                         Number(info.track.cd) > 1
                             pathFolder = path.resolve Config.savePath, foldername, "disc #{info.track.disc}"
                         else
@@ -989,7 +989,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                         while i--
                             $scope.checkAll i
                             $scope.data[i].checkAll = true
-                            
+
                         $scope.step = 3
                 else
                     console.error err, result, targets
@@ -1046,7 +1046,7 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
             $scope.remember = data.remember
     $scope.user = User
     $scope.user.logged = false
-    
+
     formData = []
 
     setLogged = (cb)->
@@ -1092,7 +1092,6 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
                         else
                             console.log '登录失败, 你所在的国家或地区可能无法使用虾米音乐网, 请开通VIP后再试.'
                             console.error result
-                            $scope.loginFormInit()
             ###
             request.post 'http://www.xiami.com/vip/update-tone',
                 proxy: common.getProxyString()
@@ -1104,7 +1103,7 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
                     user_id: User.id
                     tone_type: 1
             ###
-        
+
     $scope.logout = ->
         Config.cookie = ''
         pCookieRemoved = Promise.all [$localForage.removeItem('config.cookie'), $localForage.removeItem('config.jar')]
@@ -1115,7 +1114,6 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
                 User.logged = false
                 # $scope.loginPageLoad()
                 common.loadLoginPage()
-                $scope.loginFormInit()
 
     $scope.sign = ->
         common.post 'http://www.xiami.com/task/signin'
@@ -1140,7 +1138,7 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
                 else
                     console.error error
         ###
-        
+
     $scope.loginByWeb = ->
         newWindow = gui.Window.open 'https://login.xiami.com/member/login',
             'frame': true
@@ -1156,25 +1154,23 @@ App.controller 'LoginCtrl', ($scope, Config, User, $localForage, $sce)->
                             ret += "#{i.name}=#{i.value}; "
                         ret
                     $scope.$apply setLogged
-    
+
                     newWindow = null
 
     $scope.loginByCookie = ->
         Config.cookie = $scope.cookie
         setLogged()
-        
+
     $scope.refreshVerification = ->
         img = fs.createWriteStream 'validate.png'
         img.on 'finish',->
             $scope.$apply ->
                 $scope.validateUrl = "app://XiamiThief/validate.png?#{Math.random()}"
         common.getReq("https://login.xiami.com/coop/checkcode?forlogin=1&t=#{Math.random()}").pipe img
-        
-    _.defer ->        
-        $scope.loginFormInit()
-        
+
+    _.defer ->
         window.setLogged = setLogged
-        
+
         ###
         pCookie = Promise.all [$localForage.getItem('config.jar'), $localForage.getItem('config.cookie')]
         pCookie.then ([jar, cookie])->
