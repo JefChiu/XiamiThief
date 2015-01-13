@@ -1123,6 +1123,7 @@
               console.log('info', info);
               filename = common.replaceBat(Config.filenameFormat, ['%NAME%', info.song.name], ['%ARTIST%', info.artist.name], ['%ALBUM%', info.album.name], ['%TRACK%', info.track.id != null ? (info.track.id.length === 1 ? "0" + info.track.id : info.track.id) : ''], ['%DISC%', (_ref1 = info.track.disc) != null ? _ref1 : '']);
               filename = common.getSafeFilename(filename);
+              foldername = '';
               switch (Config.saveMode) {
                 case 'smartClassification':
                   switch (info.source.type) {
@@ -1138,8 +1139,6 @@
                     case 'user':
                       foldername = common.safePath(info.source.name);
                       break;
-                    case '':
-                      break;
                     default:
                       foldername = '';
                   }
@@ -1147,8 +1146,6 @@
                   break;
                 case 'alwaysClassification':
                   foldername = common.replaceBat('%ARTIST%/%NAME%', ['%NAME%', common.safePath((_ref7 = info.album.name) != null ? _ref7 : '')], ['%ARTIST%', common.safePath((_ref8 = info.artist.name) != null ? _ref8 : '')]);
-                  break;
-                case 'direct':
                   break;
                 default:
                   foldername = '';

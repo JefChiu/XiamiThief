@@ -884,6 +884,7 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                             ['%TRACK%', if info.track.id? then (if info.track.id.length is 1 then "0#{info.track.id}" else info.track.id) else ''],
                             ['%DISC%', info.track.disc ? '']
                         filename = common.getSafeFilename filename
+                        foldername = ''
                         switch Config.saveMode
                             when 'smartClassification'
                                 switch info.source.type
@@ -900,7 +901,6 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                                         foldername = common.safePath info.source.name
                                     when 'user'
                                         foldername = common.safePath info.source.name
-                                    when ''
                                     else
                                         foldername = ''
                                 foldername = common.getSafeFoldername foldername
@@ -908,7 +908,6 @@ App.controller 'CreateCtrl',($scope, $interval, State, TaskQueue, Config, User)-
                                 foldername = common.replaceBat '%ARTIST%/%NAME%',
                                     ['%NAME%', common.safePath info.album.name ? ''],
                                     ['%ARTIST%', common.safePath info.artist.name ? '']
-                            when 'direct'
                             else
                                 foldername = ''
                         if (info.source.type is 'album' or Config.saveMode is 'alwaysClassification') and

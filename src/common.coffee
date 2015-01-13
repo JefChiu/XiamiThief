@@ -26,10 +26,10 @@ setInterval = (func, delay)->
         if not func()
             setInterval func, delay
     , delay
-    
+
 execPath = path.dirname process.execPath
 
-config = 
+config =
     jar: request.jar()
     savePath: path.resolve execPath, 'Music'
     foldernameFormat: '%NAME%'
@@ -80,13 +80,13 @@ mixin = (args...) ->
         for key, value of obj
             result[key] = value
     result
-    
+
 extend = (source, args...)->
     for obj in args
         for key, value of obj
             source[key] = value
     source
-    
+
 supplement = (source, args...)->
     for obj in args
         for key, value of obj
@@ -175,7 +175,7 @@ replaceLast = (search, str, newStr)->
     search?.replace RegExp(str + '$'), newStr
 
 replaceBat = (str, args...)->
-    for [sv, nv] in args 
+    for [sv, nv] in args
         sv = RegExp sv, g if not sv instanceof RegExp
         str = str?.replace sv, nv
     str
@@ -241,7 +241,7 @@ getValidArray = (arr)->
 
 getCoverType = (url)->
     (/\.([\w\d]+)$/.exec url)?[1]
-    
+
 type2name = (type)->
     (
         song: '单曲'
@@ -249,7 +249,7 @@ type2name = (type)->
         collect: '精选集'
         artist: '艺人热门歌曲'
     )[type] if type?
-    
+
 index = (arr, i)->
     if i < 0
         arr[arr.length + i]
